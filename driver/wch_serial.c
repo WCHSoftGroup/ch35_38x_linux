@@ -3031,7 +3031,16 @@ wch_ser_set_termios(
 #endif
 	
     baud = ser_get_baud_rate(port, termios, old, 0, port->uartclk / 16); 
-    quot = wch_ser_get_divisor(port, baud);
+
+	/* add on 20210323 */
+	if (baud > 115200) {
+		sp->ier |= 1 << 5;
+		baud /= 24;
+	} else {
+		sp->ier &= ~(1 << 5);
+	}
+		
+	quot = wch_ser_get_divisor(port, baud);
     if (sp->capabilities & UART_USE_FIFO) 
     {
         if (baud < 2400)

@@ -10,13 +10,14 @@
  * (at your option) any later version.
  *
  *
- * Version: V1.12
+ * Version: V1.13
  *
  * Update Log:
  * V1.00 - initial version
  * V1.10 - fixed uart send bugs
  * V1.11 - fixed the issue of serial ports number creation
  * V1.12 - fixed modem signals support
+ * V1.13 - added automatic frequency multiplication when using baud rates higher than 115200bps
  */
 
 #include "wch_common.h"
