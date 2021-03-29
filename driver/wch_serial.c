@@ -3157,11 +3157,18 @@ ser_receive_chars(
     int max_count = 256;
     unsigned char lsr = *status;
     char flag;
+	struct timeval t1, t2;
+	int send_total = 0;
+	int delta_sec = 0;
+	int delta_usec = 0;
+
+	do_gettimeofday(&t1);
     do 
     {
         ch = READ_UART_RX(sp);
         flag = TTY_NORMAL;
         sp->port.icount.rx++;
+		send_total++;
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,4,18))  
         if (unlikely(lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE))) 
 #else
@@ -3237,6 +3244,18 @@ ignore_char:
         }
         
     } while (lsr & (UART_LSR_DR | UART_LSR_BI) && (max_count-- > 0));
+
+	do_gettimeofday(&t2);
+	delta_sec = t2.tv_sec - t1.tv_sec;
+	delta_usec = t2.tv_usec - t1.tv_usec;
+
+	if (delta_usec < 0) {
+		delta_sec--;
+		delta_usec = 1000000 + delta_usec;
+	}
+
+	printk("RX %d bytes takes: %2d sec %2d us\n",
+		send_total, delta_sec, delta_usec);
     
     spin_unlock(&sp->port.lock);
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
@@ -3256,6 +3275,11 @@ ser_transmit_chars(
 {
     struct circ_buf *xmit = &sp->port.info->xmit;
     int count;
+	struct timeval t1, t2;
+	int send_total = 0;
+	int delta_sec = 0;
+	int delta_usec = 0;
+
     if ((!sp) || (!sp->port.iobase)) 
     {
         return;
@@ -3286,12 +3310,14 @@ ser_transmit_chars(
     }
 
     count = sp->port.fifosize;
-    
+
+	do_gettimeofday(&t1);
     do 
     {
         WRITE_UART_TX(sp, xmit->buf[xmit->tail]);
         xmit->tail = (xmit->tail + 1) & (WCH_UART_XMIT_SIZE - 1);
         sp->port.icount.tx++;
+		send_total++;
         
         if (ser_circ_empty(xmit))
         {
@@ -3299,6 +3325,18 @@ ser_transmit_chars(
         }
         
     } while (--count > 0);
+
+	do_gettimeofday(&t2);
+	delta_sec = t2.tv_sec - t1.tv_sec;
+	delta_usec = t2.tv_usec - t1.tv_usec;
+
+	if (delta_usec < 0) {
+		delta_sec--;
+		delta_usec = 1000000 + delta_usec;
+	}
+
+	printk("TX %d bytes takes: %2d sec %2d us\n",
+		send_total, delta_sec, delta_usec);
 
     if (ser_circ_chars_pending(xmit) < WAKEUP_CHARS)
     {
@@ -3967,7 +4005,6 @@ wch_ser_interrupt(
 			// handle port 21~28
 			if ((irqbits & 0x80000000) == 0)
 			{
-				
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
 					sp = first_sp + i + 0x14;
@@ -3982,23 +4019,22 @@ wch_ser_interrupt(
 					}
 					else
 					{
-						break;
+						iir = READ_UART_IIR(sp) & 0x0f;
+						
+						if (iir & UART_IIR_NO_INT)
+						{
+							continue;
+						}
+						else
+						{
+							spin_lock(&sp->port.lock);
+							ser_handle_port(sp, iir);
+							spin_unlock(&sp->port.lock);
+						}
 					}
 				}
-				iir = READ_UART_IIR(sp) & 0x0f;
-				
-				if (iir & UART_IIR_NO_INT)
-				{
-					continue;
-				}
-				else
-				{
-					spin_lock(&sp->port.lock);
-					ser_handle_port(sp, iir);
-					spin_unlock(&sp->port.lock);
-				} 
 			}
-			else if ((irqbits & 0x40000000) == 0)
+			if ((irqbits & 0x40000000) == 0)
 			{
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
@@ -4014,23 +4050,22 @@ wch_ser_interrupt(
 					}
 					else
 					{
-						break;
+						iir = READ_UART_IIR(sp) & 0x0f;
+						
+						if (iir & UART_IIR_NO_INT)
+						{
+							continue;
+						}
+						else
+						{
+							spin_lock(&sp->port.lock);
+							ser_handle_port(sp, iir);
+							spin_unlock(&sp->port.lock);
+						} 
 					}
 				}
-				iir = READ_UART_IIR(sp) & 0x0f;
-				
-				if (iir & UART_IIR_NO_INT)
-				{
-					continue;
-				}
-				else
-				{
-					spin_lock(&sp->port.lock);
-					ser_handle_port(sp, iir);
-					spin_unlock(&sp->port.lock);
-				} 
 			}
-			else if ((irqbits & 0x20000000) == 0)
+			if ((irqbits & 0x20000000) == 0)
 			{
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
@@ -4053,24 +4088,22 @@ wch_ser_interrupt(
 					}
 					else
 					{
-						break;
+						iir = READ_UART_IIR(sp) & 0x0f;
+						
+						if (iir & UART_IIR_NO_INT)
+						{
+							continue;
+						}
+						else
+						{
+							spin_lock(&sp->port.lock);
+							ser_handle_port(sp, iir);
+							spin_unlock(&sp->port.lock);
+						} 
 					}
 				}
-				
-				iir = READ_UART_IIR(sp) & 0x0f;
-				
-				if (iir & UART_IIR_NO_INT)
-				{
-					continue;
-				}
-				else
-				{
-					spin_lock(&sp->port.lock);
-					ser_handle_port(sp, iir);
-					spin_unlock(&sp->port.lock);
-				} 
 			}
-			else if ((irqbits & 0x00000100) == 0x00000100)
+			if ((irqbits & 0x00000100) == 0x00000100)
 			{
 				sp = first_sp;
 				iir = READ_UART_IIR(sp) & 0x0f;
@@ -4086,7 +4119,7 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				} 
 			}
-			else if ((irqbits & 0x00000200) == 0x00000200)
+			if ((irqbits & 0x00000200) == 0x00000200)
 			{
 				sp = first_sp + 0x01;
 				iir = READ_UART_IIR(sp) & 0x0f;
@@ -4102,7 +4135,7 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				} 
 			}
-			else if ((irqbits & 0x00000400) == 0x00000400)
+			if ((irqbits & 0x00000400) == 0x00000400)
 			{
 				sp = first_sp + 0x02;
 				iir = READ_UART_IIR(sp) & 0x0f;
@@ -4118,7 +4151,7 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				} 
 			}
-			else if ((irqbits & 0x00000800) == 0x00000800)
+			if ((irqbits & 0x00000800) == 0x00000800)
 			{
 				sp = first_sp + 0x03;
 				iir = READ_UART_IIR(sp) & 0x0f;
