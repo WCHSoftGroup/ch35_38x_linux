@@ -622,6 +622,7 @@ ser_start(
 {
     struct ser_state *state = NULL;
     struct ser_port *port = NULL;
+	unsigned long flags;
 	
     int line = WCH_SER_DEVNUM(tty);
     if (line >= wch_ser_port_total_cnt)
@@ -631,8 +632,10 @@ ser_start(
 	
     state = tty->driver_data;
     port = state->port; 
-	
+
+	spin_lock_irqsave(&port->lock, flags);
     _ser_start(tty);
+	spin_unlock_irqrestore(&port->lock, flags);
 }
 
 
@@ -1280,6 +1283,7 @@ ser_write(
     struct ser_state *state = tty->driver_data;
     struct ser_port *port = NULL;
     struct circ_buf *circ = NULL;
+	unsigned long flags;
     int c;
     int ret = 0;
     if (!state || !state->info) 
@@ -1295,7 +1299,7 @@ ser_write(
         return 0;
     }
 	
-	
+	spin_lock_irqsave(&port->lock, flags);
     while (1) 
     {
         c = CIRC_SPACE_TO_END(circ->head, circ->tail, WCH_UART_XMIT_SIZE);
@@ -1323,16 +1327,15 @@ ser_write(
 		{
 			memcpy(circ->buf + circ->head, buf, c);
 		}
-#endif				
-		
-		
+#endif
         circ->head = (circ->head + c) & (WCH_UART_XMIT_SIZE - 1);
         buf += c;
         count -= c;
         ret += c;
     }
+    _ser_start(tty);
+	spin_unlock_irqrestore(&port->lock, flags);
 	
-    ser_start(tty);
     return ret;
 }
 
@@ -3157,12 +3160,7 @@ ser_receive_chars(
     int max_count = 256;
     unsigned char lsr = *status;
     char flag;
-	struct timeval t1, t2;
-	int send_total = 0;
-	int delta_sec = 0;
-	int delta_usec = 0;
 
-	do_gettimeofday(&t1);
     do 
     {
         ch = READ_UART_RX(sp);
@@ -3244,18 +3242,6 @@ ignore_char:
         }
         
     } while (lsr & (UART_LSR_DR | UART_LSR_BI) && (max_count-- > 0));
-
-	do_gettimeofday(&t2);
-	delta_sec = t2.tv_sec - t1.tv_sec;
-	delta_usec = t2.tv_usec - t1.tv_usec;
-
-	if (delta_usec < 0) {
-		delta_sec--;
-		delta_usec = 1000000 + delta_usec;
-	}
-
-	printk("RX %d bytes takes: %2d sec %2d us\n",
-		send_total, delta_sec, delta_usec);
     
     spin_unlock(&sp->port.lock);
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
@@ -3275,10 +3261,6 @@ ser_transmit_chars(
 {
     struct circ_buf *xmit = &sp->port.info->xmit;
     int count;
-	struct timeval t1, t2;
-	int send_total = 0;
-	int delta_sec = 0;
-	int delta_usec = 0;
 
     if ((!sp) || (!sp->port.iobase)) 
     {
@@ -3311,7 +3293,6 @@ ser_transmit_chars(
 
     count = sp->port.fifosize;
 
-	do_gettimeofday(&t1);
     do 
     {
         WRITE_UART_TX(sp, xmit->buf[xmit->tail]);
@@ -3325,18 +3306,6 @@ ser_transmit_chars(
         }
         
     } while (--count > 0);
-
-	do_gettimeofday(&t2);
-	delta_sec = t2.tv_sec - t1.tv_sec;
-	delta_usec = t2.tv_usec - t1.tv_usec;
-
-	if (delta_usec < 0) {
-		delta_sec--;
-		delta_usec = 1000000 + delta_usec;
-	}
-
-	printk("TX %d bytes takes: %2d sec %2d us\n",
-		send_total, delta_sec, delta_usec);
 
     if (ser_circ_chars_pending(xmit) < WAKEUP_CHARS)
     {
@@ -4005,101 +3974,77 @@ wch_ser_interrupt(
 			// handle port 21~28
 			if ((irqbits & 0x80000000) == 0)
 			{
-				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
-				{
-					sp = first_sp + i + 0x14;
-					irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
-					{
-						break;
-					}	
-					if (!(bits & irqbits))
-					{
-						continue;
+				sp = first_sp + 0x14;
+				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (irqbits & (1 << i)) {
+							sp += i;
+							iir = READ_UART_IIR(sp) & 0x0f; 	
+							if (iir & UART_IIR_NO_INT)
+							{
+								continue;
+							}
+							else
+							{
+								spin_lock(&sp->port.lock);
+								ser_handle_port(sp, iir);
+								spin_unlock(&sp->port.lock);
+							}
+						}	
 					}
-					else
-					{
-						iir = READ_UART_IIR(sp) & 0x0f;
-						
-						if (iir & UART_IIR_NO_INT)
-						{
-							continue;
-						}
-						else
-						{
-							spin_lock(&sp->port.lock);
-							ser_handle_port(sp, iir);
-							spin_unlock(&sp->port.lock);
-						}
-					}
-				}
+				}	
 			}
 			if ((irqbits & 0x40000000) == 0)
 			{
-				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
-				{
-					sp = first_sp + i + 0x0C;
-					irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
-					{
-						break;
-					}
-					if (!(bits & irqbits))
-					{
-						continue;
-					}
-					else
-					{
-						iir = READ_UART_IIR(sp) & 0x0f;
-						
-						if (iir & UART_IIR_NO_INT)
-						{
-							continue;
-						}
-						else
-						{
-							spin_lock(&sp->port.lock);
-							ser_handle_port(sp, iir);
-							spin_unlock(&sp->port.lock);
-						} 
+				sp = first_sp + 0x0C;
+				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (irqbits & (1 << i)) {
+							sp += i;
+							iir = READ_UART_IIR(sp) & 0x0f; 	
+							if (iir & UART_IIR_NO_INT)
+							{
+								continue;
+							}
+							else
+							{
+								spin_lock(&sp->port.lock);
+								ser_handle_port(sp, iir);
+								spin_unlock(&sp->port.lock);
+							}
+						}	
 					}
 				}
 			}
 			if ((irqbits & 0x20000000) == 0)
 			{
-				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
+				if (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) // CH384_28S
 				{
-					if (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) // CH384_28S
-					{
-						sp = first_sp + i + 0x04;
-					}
-					else // CH384_8S
-					{
-						sp = first_sp + i;
-					}
-					irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
-					{
-						break;
-					}
-					if (!(bits & irqbits))
-					{
-						continue;
-					}
-					else
-					{
-						iir = READ_UART_IIR(sp) & 0x0f;
-						
-						if (iir & UART_IIR_NO_INT)
-						{
-							continue;
-						}
-						else
-						{
-							spin_lock(&sp->port.lock);
-							ser_handle_port(sp, iir);
-							spin_unlock(&sp->port.lock);
-						} 
+					sp = first_sp + 0x04;
+				}
+				else
+				{
+					sp = first_sp;
+				}
+				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (irqbits & (1 << i)) {
+							sp += i;
+							iir = READ_UART_IIR(sp) & 0x0f; 	
+							if (iir & UART_IIR_NO_INT)
+							{
+								continue;
+							}
+							else
+							{
+								spin_lock(&sp->port.lock);
+								ser_handle_port(sp, iir);
+								spin_unlock(&sp->port.lock);
+							}
+						}	
 					}
 				}
 			}
@@ -4166,10 +4111,6 @@ wch_ser_interrupt(
 					ser_handle_port(sp, iir);
 					spin_unlock(&sp->port.lock);
 				} 
-			}
-			else
-			{
-				break;
 			}
 
 			if (pass_counter++ > INTERRUPT_COUNT)
