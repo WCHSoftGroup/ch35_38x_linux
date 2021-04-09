@@ -99,14 +99,14 @@
 
 /*-------------------------------------------------------------------------------
 
- for wch_main.c        
- 
+ for wch_main.c
+
 -------------------------------------------------------------------------------*/
 /*******************************************************
-WCH driver information              
+WCH driver information
 *******************************************************/
-#define WCH_DRIVER_VERSION 		"1.12"
-#define WCH_DRIVER_DATE 		"2020/09/29"
+#define WCH_DRIVER_VERSION 		"1.13"
+#define WCH_DRIVER_DATE 		"2021/04/09"
 #define WCH_DRIVER_AUTHOR 		"WCH GROUP"
 #define WCH_DRIVER_DESC 		"WCH Multi-I/O Board Driver Module"
 
@@ -115,7 +115,7 @@ WCH driver information
 /*******************************************************
 WCH driver debug
 *******************************************************/
-#define WCH_DBG 	1
+#define WCH_DBG 	0
 #define WCH_DBG_SERIAL 	0
 #define WCH_DBG_BOARD 	1
 #define WCH_DBG_SERPORT 1
@@ -131,7 +131,7 @@ dbg_serial(
 	char buffer[256];
 	int i, len;
 	va_list arglist;
-	
+
 	va_start(arglist, fmt);
 	vsprintf(&buffer[0], fmt, arglist);
 	va_end(arglist);
@@ -203,7 +203,7 @@ enum {
 	NONE_BOARD = 0,
 	WCH_BOARD_CH351_2S,
 	WCH_BOARD_CH352_2S,
-	WCH_BOARD_CH352_1S1P,	
+	WCH_BOARD_CH352_1S1P,
 	WCH_BOARD_CH353_4S,
 	WCH_BOARD_CH353_2S1P,
 	WCH_BOARD_CH353_2S1PAR,
@@ -255,7 +255,7 @@ extern int wch_ser_port_total_cnt;
  * uart information
  *******************************************************/
 
-// uart fifo info 
+// uart fifo info
 #define CH351_FIFOSIZE_16					16
 #define CH351_TRIGGER_LEVEL_16FIFO_01		1
 #define CH351_TRIGGER_LEVEL_16FIFO_04		4
@@ -377,7 +377,7 @@ extern int wch_ser_port_total_cnt;
 
 
 // register status info
-#define UART_LSR_ERR_IN_RFIFO 	0x80	
+#define UART_LSR_ERR_IN_RFIFO 	0x80
 #define UART_MCR_AFE 			0x20
 #define UART_IIR_CTO 			0x0C
 
@@ -390,7 +390,7 @@ extern int wch_ser_port_total_cnt;
 
 
 /*******************************************************
- * miscellaneous Information              
+ * miscellaneous Information
  *******************************************************/
 #define INTERRUPT_COUNT 	0x80
 #define WAKEUP_CHARS 		0x100
@@ -408,7 +408,7 @@ extern int wch_ser_port_total_cnt;
 
 
 /*******************************************************
-struct define Information 
+struct define Information
 *******************************************************/
 
 // name length
@@ -421,21 +421,21 @@ struct ser_port_info {
 	unsigned int  bus_number_info;
 	unsigned int  dev_number_info;
 	unsigned int  port_info;
-	unsigned int  base_info;		
-	unsigned int  irq_info;	
+	unsigned int  base_info;
+	unsigned int  irq_info;
 };
 
 struct port {
 	char type;
-	
+
 	int bar1;
 	unsigned int offset1;
 	unsigned char length1;
-	
+
 	int bar2;
 	unsigned int offset2;
 	unsigned char length2;
-	
+
 	unsigned int chip_flag;
 };
 
@@ -444,18 +444,18 @@ struct pci_board {
 	unsigned int device_id;
 	unsigned int sub_vendor_id;
 	unsigned int sub_device_id;
-	
+
 	unsigned int num_serport;
-	
+
 	unsigned int intr_vector_bar;
 	unsigned int intr_vector_offset;
 	unsigned int intr_vector_offset_1;
 	unsigned int intr_vector_offset_2;
 	unsigned int intr_vector_offset_3;
-	
+
 	char board_name[WCH_BOARDNAME_LENGTH];
 	unsigned int board_flag;
-	
+
 	struct port port[WCH_PORT_ONBOARD_MAX];
 };
 
@@ -469,11 +469,11 @@ struct wch_board {
 	int board_number;
 	unsigned int bus_number;
 	unsigned int dev_number;
-	
-	unsigned int ser_ports; 
-	
+
+	unsigned int ser_ports;
+
 	unsigned int ser_port_index;
-	
+
 	unsigned int bar_addr[WCH_PCICFG_BAR_TOTAL];
 	unsigned int irq;
 	void *board_membase;
@@ -488,8 +488,8 @@ struct wch_board {
 
 /*-------------------------------------------------------------------------------
 
- for wch_serial.c       
- 
+ for wch_serial.c
+
 -------------------------------------------------------------------------------*/
 /*******************************************************
  * ioctl user define
@@ -601,7 +601,7 @@ struct ser_info {
 	struct semaphore tmpbuf_sem;
 	int blocked_open;
 	struct tasklet_struct tlet;
-	
+
 	wait_queue_head_t open_wait;
 	wait_queue_head_t delta_msr_wait;
 };
@@ -613,12 +613,12 @@ struct ser_driver {
 	int minor;
 	int	nr;
 	struct ser_state *state;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)) 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 	struct tty_driver *tty_driver;
 #else
     struct tty_driver tty_driver;
-#endif 
-  
+#endif
+
 };
 
 
@@ -628,81 +628,81 @@ struct ser_port {
 	void *board_membase;
 	unsigned int iobase;
 	unsigned int irq;
-	unsigned int uartclk;		
-	unsigned int fifosize;		
-	unsigned char x_char;			
-	unsigned char iotype;			
-	
-	unsigned int read_status_mask;	
-	unsigned int ignore_status_mask;	
-	struct ser_info *info;	
-	struct ser_state *state;		
-	struct ser_icount icount;			
-		
+	unsigned int uartclk;
+	unsigned int fifosize;
+	unsigned char x_char;
+	unsigned char iotype;
+
+	unsigned int read_status_mask;
+	unsigned int ignore_status_mask;
+	struct ser_info *info;
+	struct ser_state *state;
+	struct ser_icount icount;
+
 	unsigned int flags;
-	unsigned int mctrl;			
+	unsigned int mctrl;
 	unsigned int timeout;
-	unsigned int type;			
+	unsigned int type;
 	unsigned int custom_divisor;
-	unsigned int line;			
+	unsigned int line;
 	struct device *dev;  //zh
-	
+
 	int board_enum;
-	unsigned int bus_number;		
-	unsigned int dev_number;	
+	unsigned int bus_number;
+	unsigned int dev_number;
 	struct pci_board pb_info;
 	unsigned int vector;
 	unsigned int chip_iobase;
 	unsigned int vector_mask;
 	unsigned char chip_flag;
 	unsigned int port_flag;
-	unsigned int baud_base;		
-	int rx_trigger;	
-	unsigned char ldisc_stop_rx;	
-	
+	unsigned int baud_base;
+	int rx_trigger;
+	unsigned char ldisc_stop_rx;
+
 	unsigned int setserial_flag;
 };
 
 
 struct ser_state {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 8, 0))
-	struct tty_port port0;	
+	struct tty_port port0;
 #endif
 	unsigned int close_delay;
 	unsigned int closing_wait;
 	int count;
 	struct ser_info *info;
 	struct ser_port *port;
-	struct semaphore sem;		
+	struct semaphore sem;
 };
 
 
-static inline int 
+static inline int
 ser_handle_break(
 				 struct ser_port *port
 				 )
 {
 	struct ser_info *info = port->info;
-	
+
 	if (info->flags & WCH_UPF_SAK)
 	{
 		do_SAK(info->tty);
 	}
 	return 0;
-}	
+}
 
 
-static inline void 
+static inline void
 ser_handle_dcd_change(
-					  struct ser_port *port, 
+					  struct ser_port *port,
 					  unsigned int status
 					  )
 {
 	struct ser_info *info = port->info;
-	
+
 	port->icount.dcd++;
-	
-	if (info->flags & WCH_UIF_CHECK_CD) 
+
+	if (info->flags & WCH_UIF_CHECK_CD)
 	{
 		if (status)
 		{
@@ -717,12 +717,12 @@ ser_handle_dcd_change(
 
 #include <linux/tty_flip.h>
 
-static inline void 
+static inline void
 ser_insert_char(
-				struct ser_port *port, 
-				unsigned int status, 
-				unsigned int overrun, 
-				unsigned int ch, 
+				struct ser_port *port,
+				unsigned int status,
+				unsigned int overrun,
+				unsigned int ch,
 				unsigned int flag
 				)
 {
@@ -733,7 +733,7 @@ ser_insert_char(
     {
 		tty_insert_flip_char(tty, ch, flag);
     }
-	
+
 	if (status & ~port->ignore_status_mask & overrun)
     {
 		tty_insert_flip_char(tty, 0, TTY_OVERRUN);
@@ -746,13 +746,13 @@ ser_insert_char(
 		if (tty_insert_flip_char(tty, ch, flag) == 0)
 			++port->icount.buf_overrun;
     }
-	
+
 	if (status & ~port->ignore_status_mask & overrun)
     {
 		if (tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
 			++port->icount.buf_overrun;
     }
-#endif	
+#endif
 }
 
 
@@ -761,20 +761,20 @@ ser_insert_char(
  *******************************************************/
 struct wch_ser_port {
 	struct ser_port port;
-	struct timer_list timer;	
-	struct list_head list;	
+	struct timer_list timer;
+	struct list_head list;
 
-	unsigned int capabilities;	
+	unsigned int capabilities;
 	unsigned char ier;
 	unsigned char lcr;
 	unsigned char mcr;
-	unsigned char mcr_mask;	
-	unsigned char mcr_force;	
+	unsigned char mcr_mask;
+	unsigned char mcr_force;
 	unsigned char lsr_break_flag;
 };
 
 /*-------------------------------------------------------------------------------
- * function and variable extern           
+ * function and variable extern
  -------------------------------------------------------------------------------*/
 // wch_devtable.c
 extern struct pci_board wch_pci_board_conf[];
