@@ -10,7 +10,7 @@
  * (at your option) any later version.
  *
  *
- * Version: V1.13
+ * Version: V1.14
  *
  * Update Log:
  * V1.00 - initial version
@@ -19,6 +19,7 @@
  * V1.12 - fixed modem signals support
  * V1.13 - added automatic frequency multiplication when using baud rates higher than 115200bps
  		 - added mutex protect in uart send process
+ * V1.14 - optimized the processing of serial ports in interruption
  */
 
 #include "wch_common.h"
@@ -882,7 +883,7 @@ ch365_32s_test(
 int
 wch_register_irq(
 	void
-	) // \C7\EB\C7\F3\D6ж\CF
+	)
 {
 	struct wch_board *sb = NULL;
 	int status = 0;
@@ -964,7 +965,7 @@ wch_iounmap(
 void
 wch_release_irq(
 	void
-	) // \CAͷ\C5\D6ж\CF
+	)
 {
 	struct wch_board *sb = NULL;
     int i;
@@ -1101,20 +1102,18 @@ void
 __exit
 wch_exit(
 	void
-	) // ж\D4\D8ģ\BF\E9
+	)
 {
 	printk("\n\n");
 	printk("====================  WCH Device Driver Module Uninstall  ====================\n");
 	printk("\n");
 
 	wch_ser_unregister_ports(&wch_ser_reg);
-printk("***********wch_ser_unregister_ports***************\n");
+	printk("***********wch_ser_unregister_ports***************\n");
 	wch_ser_unregister_driver(&wch_ser_reg);
-printk("***********wch_ser_unregister_driver_success***********\n");
+	printk("***********wch_ser_unregister_driver_success***********\n");
 	wch_iounmap();
-printk("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 	wch_release_irq();
-
 	printk("WCH Info : Unload WCH Multi-I/O Board Driver Module Done.\n");
 	printk("================================================================================\n");
 }
