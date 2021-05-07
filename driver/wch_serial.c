@@ -66,7 +66,7 @@ static int ser_write(struct tty_struct *, const unsigned char *, int);
 #else
 static int ser_write(struct tty_struct *, int, const unsigned char *, int);
 #endif
-static int ser_get_lsr_info(struct ser_state *, unsigned int *);
+//static int ser_get_lsr_info(struct ser_state *, unsigned int *);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,39))
 static int ser_tiocmget(struct tty_struct *);
 static int ser_tiocmset(struct tty_struct *, unsigned int, unsigned int);
@@ -156,30 +156,6 @@ static void WRITE_UART_LCR(struct wch_ser_port *, unsigned char);
 static void WRITE_UART_MCR(struct wch_ser_port *, unsigned char);
 static void WRITE_UART_DLL(struct wch_ser_port *, int);
 static void WRITE_UART_DLM(struct wch_ser_port *, int);
-
-static
-void
-WRITE_XINT_ENABLE_IRQ(
-	struct wch_ser_port *sp
-	)
-{
-    if (sp->port.iobase)
-    {
-        outb(inb(sp->port.chip_iobase + 0xEB) | 0x02, sp->port.chip_iobase + 0xEB);
-    }
-}
-
-static
-void
-WRITE_XINT_DISABLE_IRQ(
-	struct wch_ser_port *sp
-	)
-{
-    if (sp->port.iobase)
-    {
-        outb(inb(sp->port.chip_iobase + 0xEB) & 0xFD, sp->port.chip_iobase + 0xEB);
-    }
-}
 
 static
 unsigned char
@@ -684,8 +660,6 @@ ser_startup(
     unsigned long page;
     int retval = 0;
 
-	struct wch_ser_port *sp = (struct wch_ser_port *)port;
-
     if (info->flags & WCH_UIF_INITIALIZED)
     {
         return 0;
@@ -752,11 +726,6 @@ ser_startup(
     }
 	set_mctrl(port, TIOCM_OUT2);
 
-	if (sp->port.chip_flag == WCH_BOARD_CH384_8S || sp->port.chip_flag == WCH_BOARD_CH384_28S)
-	{
-//		WRITE_XINT_ENABLE_IRQ(sp);
-	}
-
     return retval;
 }
 
@@ -809,11 +778,6 @@ ser_shutdown(
 	// modified on 20200929
 	sp->mcr = 0;
 	clear_mctrl(port, TIOCM_OUT2 | TIOCM_DTR | TIOCM_RTS);
-
-	if (sp->port.chip_flag == WCH_BOARD_CH384_8S || sp->port.chip_flag == WCH_BOARD_CH384_28S)
-	{
-//		WRITE_XINT_DISABLE_IRQ(sp);
-	}
 
     info->flags &= ~WCH_UIF_INITIALIZED;
 }
@@ -1339,7 +1303,7 @@ ser_write(
     return ret;
 }
 
-
+/*
 static int
 ser_get_lsr_info(
 				 struct ser_state *state,
@@ -1370,6 +1334,7 @@ ser_get_lsr_info(
     return put_user(result, value);
 #endif
 }
+*/
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,39))
 static int
@@ -2014,7 +1979,6 @@ ser_get_divisor(
     return quot;
 }
 
-
 unsigned int
 ser_get_baud_rate(
 				  struct ser_port *port,
@@ -2026,65 +1990,44 @@ ser_get_baud_rate(
 {
     unsigned int try;
     unsigned int baud;
-    unsigned int altbaud = 0;
+    unsigned int altbaud = 38400;
+    int hung_up = 0;
     unsigned int flags = port->flags & WCH_UPF_SPD_MASK;
+
+    if (port->flags & WCH_UPF_SPD_MASK)
+    {
+        altbaud = 38400;
+        if (flags == WCH_UPF_SPD_HI)
+        {
+            altbaud = 57600;
+        }
+
+        if (flags == WCH_UPF_SPD_VHI)
+        {
+            altbaud = 115200;
+        }
+
+        if (flags == WCH_UPF_SPD_SHI)
+        {
+            altbaud = 230400;
+        }
+
+        if (flags == WCH_UPF_SPD_WARP)
+        {
+            altbaud = 460800;
+        }
+    }
+
     for (try = 0; try < 2; try++)
     {
-   		if ((port->setserial_flag == WCH_SER_BAUD_SETSERIAL) || (port->flags & WCH_UPF_SPD_MASK))
-   		{
-   			altbaud = 38400;
-   			if (flags == WCH_UPF_SPD_HI)
-    		{
-        		altbaud = 57600;
-    		}
+    	baud = tty_termios_baud_rate(termios);
 
-			if (flags == WCH_UPF_SPD_VHI)
-    		{
-        		altbaud = 115200;
-   	 		}
-
-    		if (flags == WCH_UPF_SPD_SHI)
-    		{
-       			altbaud = 230400;
-    		}
-
-    		if (flags == WCH_UPF_SPD_WARP)
-    		{
-        		altbaud = 460800;
-    		}
-
-    		baud = altbaud;
-    	}
-    	else
-    	{
-    		switch (termios->c_cflag & (CBAUD | CBAUDEX))
-        	{
-            	case B921600 : baud = 921600; break;
-            	case B460800 : baud = 460800; break;
-            	case B230400 : baud = 230400; break;
-            	case B115200 : baud = 115200; break;
-            	case B57600 : baud = 57600; break;
-            	case B38400 : baud = 38400; break;
-            	case B19200 : baud = 19200; break;
-				case B9600 : baud = 9600; break;
-            	case B4800 : baud = 4800; break;
-            	case B2400 : baud = 2400; break;
-            	case B1800 : baud = 1800; break;
-            	case B1200 : baud = 1200; break;
-            	case B600 :	baud = 600; break;
-            	case B300 :	baud = 300; break;
-           	 	case B200 :	baud = 200; break;
-            	case B150 :	baud = 150; break;
-            	case B134 :	baud = 134; break;
-            	case B110 :	baud = 110; break;
-            	case B75 : baud = 75; break;
-            	case B50 : baud = 50; break;
-            	default : baud = 9600; break;
-        	}
-        }
+        if (try == 0 && baud == 38400)
+			baud = altbaud;
 
         if (baud == 0)
         {
+            hung_up = 1;
             baud = 9600;
         }
 
@@ -2094,15 +2037,27 @@ ser_get_baud_rate(
         }
 
         termios->c_cflag &= ~CBAUD;
-
         if (old)
         {
-            termios->c_cflag |= old->c_cflag & CBAUD;
-            old = NULL;
-            continue;
-        }
-
-        termios->c_cflag |= B9600;
+			baud = tty_termios_baud_rate(old);
+			if (!hung_up)
+				tty_termios_encode_baud_rate(termios,
+								baud, baud);
+			old = NULL;
+			continue;
+		}
+        /*
+		 * As a last resort, if the range cannot be met then clip to
+		 * the nearest chip supported rate.
+		 */
+		if (!hung_up) {
+			if (baud <= min)
+				tty_termios_encode_baud_rate(termios,
+							min + 1, min + 1);
+			else
+				tty_termios_encode_baud_rate(termios,
+							max - 1, max - 1);
+		}
     }
 
     return 0;
@@ -2241,7 +2196,7 @@ ser_update_termios(
 				   )
 {
     struct tty_struct *tty = state->info->tty;
-    struct ser_port *port = state->port;
+//    struct ser_port *port = state->port;
 
     if (!(tty->flags & (1 << TTY_IO_ERROR)))
     {
@@ -2381,8 +2336,6 @@ ser_block_til_ready(
     info->blocked_open++;
     state->count--;
 
-	printk("%s step1\n", __func__);
-
     add_wait_queue(&info->open_wait, &wait);
 
     while (1)
@@ -2418,7 +2371,6 @@ ser_block_til_ready(
 		if (info->tty->termios.c_cflag & CBAUD)
 #endif
         {
-        	printk("%s step2\n", __func__);
             set_mctrl(port, TIOCM_DTR);
         }
 
@@ -3061,6 +3013,7 @@ wch_ser_set_termios(
 	if (termios->c_cflag & CRTSCTS)
 	{
 		sp->mcr |= UART_MCR_AFE;
+        sp->mcr |= UART_MCR_RTS;
     }
 
 	// Add On 20200928
@@ -3719,6 +3672,8 @@ wch_ser_register_ports(
                 return ret;
             }
         }
+        printk("Setup ttyWCH%d - PCIe port: port %x, irq %d, type %d\n",
+			sp->port.line, sp->port.iobase, sp->port.irq, sp->port.iotype);
     }
 
     return 0;
@@ -3839,6 +3794,7 @@ wch_ser_interrupt(
     int i;
     int max;
 	unsigned long irqbits;
+    unsigned char ch438irqbits;
     unsigned long bits;
     int pass_counter = 0;
     unsigned char iir;
@@ -3982,10 +3938,10 @@ wch_ser_interrupt(
 			if ((irqbits & 0x80000000) == 0)
 			{
 				sp = first_sp + 0x14;
-				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if (irqbits != 0) {
+				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (ch438irqbits != 0) {
 					for (i = 0; i < 0x08; i++) {
-						if (irqbits & (1 << i)) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
 							if (iir & UART_IIR_NO_INT)
@@ -4005,10 +3961,10 @@ wch_ser_interrupt(
 			if ((irqbits & 0x40000000) == 0)
 			{
 				sp = first_sp + 0x0C;
-				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if (irqbits != 0) {
+				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (ch438irqbits != 0) {
 					for (i = 0; i < 0x08; i++) {
-						if (irqbits & (1 << i)) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
 							if (iir & UART_IIR_NO_INT)
@@ -4031,14 +3987,14 @@ wch_ser_interrupt(
 				{
 					sp = first_sp + 0x04;
 				}
-				else
+				else // CH384_8S
 				{
 					sp = first_sp;
 				}
-				irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if (irqbits != 0) {
+				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
+				if (ch438irqbits != 0) {
 					for (i = 0; i < 0x08; i++) {
-						if (irqbits & (1 << i)) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
 							if (iir & UART_IIR_NO_INT)
@@ -4146,12 +4102,12 @@ wch_ser_interrupt(
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
 					sp = first_sp + i;
-					irqbits = readb(sp->port.board_membase + 0x100 + 0x4F) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
+					ch438irqbits = readb(sp->port.board_membase + 0x100 + 0x4F) & sp->port.vector_mask;
+					if (ch438irqbits == 0x00000000)
 					{
 						break;
 					}
-					if (!(bits & irqbits))
+					if (!(bits & ch438irqbits))
 					{
 						continue;
 					}
@@ -4180,12 +4136,12 @@ wch_ser_interrupt(
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
 					sp = first_sp + i + 0x08;
-					irqbits = readb(sp->port.board_membase + 0x180 + 0x4F) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
+					ch438irqbits = readb(sp->port.board_membase + 0x180 + 0x4F) & sp->port.vector_mask;
+					if (ch438irqbits == 0x00000000)
 					{
 						break;
 					}
-					if (!(bits & irqbits))
+					if (!(bits & ch438irqbits))
 					{
 						continue;
 					}
@@ -4213,12 +4169,12 @@ wch_ser_interrupt(
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
 					sp = first_sp + i + 0x10;
-					irqbits = readb(sp->port.board_membase + 0x200 + 0x4F) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
+					ch438irqbits = readb(sp->port.board_membase + 0x200 + 0x4F) & sp->port.vector_mask;
+					if (ch438irqbits == 0x00000000)
 					{
 						break;
 					}
-					if (!(bits & irqbits))
+					if (!(bits & ch438irqbits))
 					{
 						continue;
 					}
@@ -4246,12 +4202,12 @@ wch_ser_interrupt(
 				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1)
 				{
 					sp = first_sp + i + 0x18;
-					irqbits = readb(sp->port.board_membase + 0x280 + 0x4F) & sp->port.vector_mask;
-					if (irqbits == 0x00000000)
+					ch438irqbits = readb(sp->port.board_membase + 0x280 + 0x4F) & sp->port.vector_mask;
+					if (ch438irqbits == 0x00000000)
 					{
 						break;
 					}
-					if (!(bits & irqbits))
+					if (!(bits & ch438irqbits))
 					{
 						continue;
 					}
@@ -4326,5 +4282,3 @@ wch_ser_interrupt(
 	}
     return 0;
 }
-
-
