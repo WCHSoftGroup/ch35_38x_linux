@@ -1,16 +1,13 @@
 /*
- * WCH Multi-I/O Board Device Driver  - Copyright (C) 2020 WCH Corporation.
- * Author: TECH39 <zhangj@wch.cn>
+ * PCI/PCIE to serial driver for ch351/352/353/355/356/357/358/359/382/384, etc.
  *
- * PCI/PCIE to uart driver for ch351/352/353/355/356/357/358/359/382/384
+ * Copyright (C) 2021 WCH Corporation.
+ * Author: TECH39 <zhangj@wch.cn>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- *
- *
- * Version: V1.14
  *
  * Update Log:
  * V1.00 - initial version
@@ -20,6 +17,7 @@
  * V1.13 - added automatic frequency multiplication when using baud rates higher than 115200bps
  		 - added mutex protect in uart send process
  * V1.14 - optimized the processing of serial ports in interruption
+ * V1.15 - added support for non-standard baud rate
  */
 
 #include "wch_common.h"
@@ -619,11 +617,11 @@ wch_ser_port_table_init(
 				sp->port.uartclk = sp->port.baud_base * 16;
 				if (ch365_32s)
 				{
-					sp->port.iotype = WCH_UPIO_MEM; // MEM\B7\C3\CE\CA
+					sp->port.iotype = WCH_UPIO_MEM;
 				}
 				else
 				{
-					sp->port.iotype = WCH_UPIO_PORT; // IO\B7\C3\CE\CA
+					sp->port.iotype = WCH_UPIO_PORT;
 				}
 
 				sp->port.flags = ASYNC_SHARE_IRQ;
@@ -1047,21 +1045,21 @@ wch_init(
 	}
 	printk("------------------->ser port table init success\n");
 
-	status = wch_register_irq(); // \C7\EB\C7\F3\D6ж\CF
+	status = wch_register_irq();
 	if (status != 0)
 	{
 		goto step1_fail;
 	}
 	printk("------------------->pci register irq success\n");
 
-	status = wch_ser_register_driver(&wch_ser_reg); // ע\B2\E1\C7\FD\B6\AF
+	status = wch_ser_register_driver(&wch_ser_reg);
 	if (status != 0)
 	{
 		goto step2_fail;
 	}
 	printk("------------------->ser register driver success\n");
 
-   	status = wch_ser_register_ports(&wch_ser_reg); // ע\B2\E1\B6˿\DA
+   	status = wch_ser_register_ports(&wch_ser_reg);
     if (status != 0)
     {
         goto step3_fail;

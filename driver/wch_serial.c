@@ -1979,7 +1979,6 @@ ser_get_divisor(
     return quot;
 }
 
-
 unsigned int
 ser_get_baud_rate(
 				  struct ser_port *port,
@@ -1991,65 +1990,44 @@ ser_get_baud_rate(
 {
     unsigned int try;
     unsigned int baud;
-    unsigned int altbaud = 0;
+    unsigned int altbaud = 38400;
+    int hung_up = 0;
     unsigned int flags = port->flags & WCH_UPF_SPD_MASK;
+
+    if (port->flags & WCH_UPF_SPD_MASK)
+    {
+        altbaud = 38400;
+        if (flags == WCH_UPF_SPD_HI)
+        {
+            altbaud = 57600;
+        }
+
+        if (flags == WCH_UPF_SPD_VHI)
+        {
+            altbaud = 115200;
+        }
+
+        if (flags == WCH_UPF_SPD_SHI)
+        {
+            altbaud = 230400;
+        }
+
+        if (flags == WCH_UPF_SPD_WARP)
+        {
+            altbaud = 460800;
+        }
+    }
+
     for (try = 0; try < 2; try++)
     {
-   		if ((port->setserial_flag == WCH_SER_BAUD_SETSERIAL) || (port->flags & WCH_UPF_SPD_MASK))
-   		{
-   			altbaud = 38400;
-   			if (flags == WCH_UPF_SPD_HI)
-    		{
-        		altbaud = 57600;
-    		}
+    	baud = tty_termios_baud_rate(termios);
 
-			if (flags == WCH_UPF_SPD_VHI)
-    		{
-        		altbaud = 115200;
-   	 		}
-
-    		if (flags == WCH_UPF_SPD_SHI)
-    		{
-       			altbaud = 230400;
-    		}
-
-    		if (flags == WCH_UPF_SPD_WARP)
-    		{
-        		altbaud = 460800;
-    		}
-
-    		baud = altbaud;
-    	}
-    	else
-    	{
-    		switch (termios->c_cflag & (CBAUD | CBAUDEX))
-        	{
-            	case B921600 : baud = 921600; break;
-            	case B460800 : baud = 460800; break;
-            	case B230400 : baud = 230400; break;
-            	case B115200 : baud = 115200; break;
-            	case B57600 : baud = 57600; break;
-            	case B38400 : baud = 38400; break;
-            	case B19200 : baud = 19200; break;
-				case B9600 : baud = 9600; break;
-            	case B4800 : baud = 4800; break;
-            	case B2400 : baud = 2400; break;
-            	case B1800 : baud = 1800; break;
-            	case B1200 : baud = 1200; break;
-            	case B600 :	baud = 600; break;
-            	case B300 :	baud = 300; break;
-           	 	case B200 :	baud = 200; break;
-            	case B150 :	baud = 150; break;
-            	case B134 :	baud = 134; break;
-            	case B110 :	baud = 110; break;
-            	case B75 : baud = 75; break;
-            	case B50 : baud = 50; break;
-            	default : baud = 9600; break;
-        	}
-        }
+        if (try == 0 && baud == 38400)
+			baud = altbaud;
 
         if (baud == 0)
         {
+            hung_up = 1;
             baud = 9600;
         }
 
@@ -2059,15 +2037,27 @@ ser_get_baud_rate(
         }
 
         termios->c_cflag &= ~CBAUD;
-
         if (old)
         {
-            termios->c_cflag |= old->c_cflag & CBAUD;
-            old = NULL;
-            continue;
-        }
-
-        termios->c_cflag |= B9600;
+			baud = tty_termios_baud_rate(old);
+			if (!hung_up)
+				tty_termios_encode_baud_rate(termios,
+								baud, baud);
+			old = NULL;
+			continue;
+		}
+        /*
+		 * As a last resort, if the range cannot be met then clip to
+		 * the nearest chip supported rate.
+		 */
+		if (!hung_up) {
+			if (baud <= min)
+				tty_termios_encode_baud_rate(termios,
+							min + 1, min + 1);
+			else
+				tty_termios_encode_baud_rate(termios,
+							max - 1, max - 1);
+		}
     }
 
     return 0;
@@ -3682,6 +3672,8 @@ wch_ser_register_ports(
                 return ret;
             }
         }
+        printk("Setup ttyWCH%d - PCIe port: port %x, irq %d, type %d\n",
+			sp->port.line, sp->port.iobase, sp->port.irq, sp->port.iotype);
     }
 
     return 0;
