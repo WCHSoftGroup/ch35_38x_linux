@@ -1,5 +1,7 @@
 #include "wch_common.h"
 
+#define PCIE_UART_MAX 28
+
 struct pci_board wch_pci_board_conf[] = {
 	// NONE
 	{
@@ -318,7 +320,7 @@ struct pci_board wch_pci_board_conf[] = {
 		// VenID			DevID					 SubVenID				 SubSysID
 		VENDOR_ID_WCH_PCIE,	DEVICE_ID_WCH_CH384_28S, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_28S,
 		// SerPort				IntrBar IntrOffset 	IntrOffset1	IntrOffset2	IntrOffset3	Name		 BoardFlag
-		28,		0,		0xE9,		0xE0,		0xE4,		0xE6,		"CH384_28S", BOARDFLAG_CH384_28_PORTS,
+		PCIE_UART_MAX,		0,		0xE9,		0xE0,		0xE4,		0xE6,		"CH384_28S", BOARDFLAG_CH384_28_PORTS,
 		{
 			//	type	bar1	ofs1	len1		bar2	ofs2	len2	flags
 			{	's',	0,		0xC0,	8,			-1,		0,		0,		WCH_BOARD_CH384_28S	 },

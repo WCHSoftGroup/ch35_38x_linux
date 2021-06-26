@@ -12,7 +12,7 @@ modules:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 
 clean:
-	rm -rf *.mk .tmp_versions Module.symvers *.mod.c *.o *.ko *.cmd Module.markers modules.order
+	rm -rf *.mk .tmp_versions Module.symvers *.mod.c *.o *.ko .wch* Module.markers modules.order
 load:
 	insmod $(DRIVERNAME).ko
 unload:
