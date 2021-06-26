@@ -105,8 +105,8 @@
 /*******************************************************
 WCH driver information
 *******************************************************/
-#define WCH_DRIVER_VERSION 		"1.15"
-#define WCH_DRIVER_DATE 		"2021/05/07"
+#define WCH_DRIVER_VERSION 		"1.16"
+#define WCH_DRIVER_DATE 		"2021/06/26"
 #define WCH_DRIVER_AUTHOR 		"WCH GROUP"
 #define WCH_DRIVER_DESC 		"WCH Multi-I/O Board Driver Module"
 
@@ -124,9 +124,9 @@ WCH driver debug
 static
 void
 dbg_serial(
-	const char *fmt,
-	...
-	)
+    const char *fmt,
+    ...
+)
 {
 	char buffer[256];
 	int i, len;
@@ -136,8 +136,7 @@ dbg_serial(
 	vsprintf(&buffer[0], fmt, arglist);
 	va_end(arglist);
 	len = strlen(buffer);
-	for (i = 0 ; i < len; i++)
-	{
+	for(i = 0 ; i < len; i++) {
 		outb(buffer[i], 0x3F8);
 		mdelay(1);
 	}
@@ -254,6 +253,10 @@ extern int wch_ser_port_total_cnt;
 /*******************************************************
  * uart information
  *******************************************************/
+
+// external crystal freq
+#define CRYSTAL_FREQ						22118400
+
 
 // uart fifo info
 #define CH351_FIFOSIZE_16					16
@@ -480,7 +483,7 @@ struct wch_board {
 	unsigned int board_flag;
 
 	unsigned int vector_mask;
-    struct pci_board pb_info;
+	struct pci_board pb_info;
 	struct pci_dev *pdev;
 	int	(*ser_isr)(struct wch_board *, struct wch_ser_port *);
 };
@@ -616,7 +619,7 @@ struct ser_driver {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 	struct tty_driver *tty_driver;
 #else
-    struct tty_driver tty_driver;
+	struct tty_driver tty_driver;
 #endif
 
 };
@@ -679,13 +682,12 @@ struct ser_state {
 
 static inline int
 ser_handle_break(
-				 struct ser_port *port
-				 )
+    struct ser_port *port
+)
 {
 	struct ser_info *info = port->info;
 
-	if (info->flags & WCH_UPF_SAK)
-	{
+	if(info->flags & WCH_UPF_SAK) {
 		do_SAK(info->tty);
 	}
 	return 0;
@@ -694,22 +696,18 @@ ser_handle_break(
 
 static inline void
 ser_handle_dcd_change(
-					  struct ser_port *port,
-					  unsigned int status
-					  )
+    struct ser_port *port,
+    unsigned int status
+)
 {
 	struct ser_info *info = port->info;
 
 	port->icount.dcd++;
 
-	if (info->flags & WCH_UIF_CHECK_CD)
-	{
-		if (status)
-		{
+	if(info->flags & WCH_UIF_CHECK_CD) {
+		if(status) {
 			wake_up_interruptible(&info->open_wait);
-		}
-		else if (info->tty)
-		{
+		} else if(info->tty) {
 			tty_hangup(info->tty);
 		}
 	}
@@ -719,39 +717,35 @@ ser_handle_dcd_change(
 
 static inline void
 ser_insert_char(
-				struct ser_port *port,
-				unsigned int status,
-				unsigned int overrun,
-				unsigned int ch,
-				unsigned int flag
-				)
+    struct ser_port *port,
+    unsigned int status,
+    unsigned int overrun,
+    unsigned int ch,
+    unsigned int flag
+)
 {
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
 	struct tty_struct *tty = port->info->tty;
 
-	if ((status & port->ignore_status_mask & ~overrun) == 0)
-    {
+	if((status & port->ignore_status_mask & ~overrun) == 0) {
 		tty_insert_flip_char(tty, ch, flag);
-    }
+	}
 
-	if (status & ~port->ignore_status_mask & overrun)
-    {
+	if(status & ~port->ignore_status_mask & overrun) {
 		tty_insert_flip_char(tty, 0, TTY_OVERRUN);
-    }
+	}
 #else
 	struct tty_port *tty = &port->state->port0;
 
-	if ((status & port->ignore_status_mask & ~overrun) == 0)
-    {
-		if (tty_insert_flip_char(tty, ch, flag) == 0)
+	if((status & port->ignore_status_mask & ~overrun) == 0) {
+		if(tty_insert_flip_char(tty, ch, flag) == 0)
 			++port->icount.buf_overrun;
-    }
+	}
 
-	if (status & ~port->ignore_status_mask & overrun)
-    {
-		if (tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
+	if(status & ~port->ignore_status_mask & overrun) {
+		if(tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
 			++port->icount.buf_overrun;
-    }
+	}
 #endif
 }
 
