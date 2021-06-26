@@ -17,7 +17,7 @@ Description:
 
 Note:  
 
- 1. If you are using multi-ports card such as CH384 + CH438 * n to achieve 12/16/20 serial ports etc.  You can modify the number in array "wch_pci_board_conf" in wch_devtable.c, at about line 321 which relates to CH384_28S, modify the number 28 to the actual amount of serial ports.
+ 1. If you are using multi-ports card such as CH384 + CH438 * n to achieve 12/16/20 serial ports etc.  You can modify the maximum uart amount varible "PCIE_UART_MAX" in wch_devtable.c at about line 3, modify the number 28 to the actual amount of serial ports.
 
  2. In this driver, the 22.1184M frequency is used to calculate the serial port baud rate by default. If other baud rates are required, the hardware needs to use other frequency crystal, and modify the crystal frequency variable "CRYSTAL_FREQ" defined in common.h at about line 258. 
 
