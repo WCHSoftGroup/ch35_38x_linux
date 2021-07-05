@@ -19,7 +19,7 @@ Note:
 
  1. If you are using multi-ports card such as CH384 + CH438 * n to achieve 12/16/20 serial ports etc.  You can modify the uart amount variable "PCIE_UART_MAX" defined in wch_devtable.c at about line 3, modify the number 28 to the actual amount of serial ports.
 
- 2. In this driver, the 22.1184M frequency is used to calculate the serial port baud rate by default. If other baud rates are required, the hardware needs to use other frequency crystal, and modify the crystal frequency variable "CRYSTAL_FREQ" defined in common.h at about line 258. 
+ 2. In this driver, the 22.1184M frequency is used to calculate the serial port baud rate by default. If other baud rates are required, the hardware needs to use other frequency crystal, and modify the crystal frequency variable "CRYSTAL_FREQ" defined in common.h at about line 255. 
 
  3. The internal reference clock of the serial port(uartclk) is equal to 1/12 or twice the frequency of the external crystal. Serial port baud rate = uartclk / 16 / 16-bit baud rate divisor reg. When the reg is equal to 1, the maximum serial baud rate supported by the crystal can be calculated. Exp:
 

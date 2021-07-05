@@ -121,8 +121,7 @@ WCH driver debug
 #define WCH_DBG_SERPORT 1
 
 #if WCH_DBG_SERIAL
-static
-void
+static void
 dbg_serial(
     const char *fmt,
     ...
@@ -136,7 +135,7 @@ dbg_serial(
 	vsprintf(&buffer[0], fmt, arglist);
 	va_end(arglist);
 	len = strlen(buffer);
-	for(i = 0 ; i < len; i++) {
+	for (i = 0 ; i < len; i++) {
 		outb(buffer[i], 0x3F8);
 		mdelay(1);
 	}
@@ -247,8 +246,6 @@ enum {
 #define WCH_SER_TOTAL_MAX 			0x100
 
 extern int wch_ser_port_total_cnt;
-
-
 
 /*******************************************************
  * uart information
@@ -488,7 +485,6 @@ struct wch_board {
 	int	(*ser_isr)(struct wch_board *, struct wch_ser_port *);
 };
 
-
 /*-------------------------------------------------------------------------------
 
  for wch_serial.c
@@ -567,9 +563,7 @@ struct wch_board {
 #define WCH_UIF_NORMAL_ACTIVE (1 << 29)
 #define WCH_UIF_INITIALIZED (1 << 31)
 
-
 #define WCH_ENABLE_MS(port, cflag) ((port)->flags & WCH_UPF_HARDPPS_CD || (cflag) & CRTSCTS || !((cflag) & CLOCAL))
-
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 #define WCH_SER_DEVNUM(x) ((x)->index)
@@ -687,7 +681,7 @@ ser_handle_break(
 {
 	struct ser_info *info = port->info;
 
-	if(info->flags & WCH_UPF_SAK) {
+	if (info->flags & WCH_UPF_SAK) {
 		do_SAK(info->tty);
 	}
 	return 0;
@@ -704,10 +698,10 @@ ser_handle_dcd_change(
 
 	port->icount.dcd++;
 
-	if(info->flags & WCH_UIF_CHECK_CD) {
-		if(status) {
+	if (info->flags & WCH_UIF_CHECK_CD) {
+		if (status) {
 			wake_up_interruptible(&info->open_wait);
-		} else if(info->tty) {
+		} else if (info->tty) {
 			tty_hangup(info->tty);
 		}
 	}
@@ -727,23 +721,23 @@ ser_insert_char(
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
 	struct tty_struct *tty = port->info->tty;
 
-	if((status & port->ignore_status_mask & ~overrun) == 0) {
+	if ((status & port->ignore_status_mask & ~overrun) == 0) {
 		tty_insert_flip_char(tty, ch, flag);
 	}
 
-	if(status & ~port->ignore_status_mask & overrun) {
+	if (status & ~port->ignore_status_mask & overrun) {
 		tty_insert_flip_char(tty, 0, TTY_OVERRUN);
 	}
 #else
 	struct tty_port *tty = &port->state->port0;
 
-	if((status & port->ignore_status_mask & ~overrun) == 0) {
-		if(tty_insert_flip_char(tty, ch, flag) == 0)
+	if ((status & port->ignore_status_mask & ~overrun) == 0) {
+		if (tty_insert_flip_char(tty, ch, flag) == 0)
 			++port->icount.buf_overrun;
 	}
 
-	if(status & ~port->ignore_status_mask & overrun) {
-		if(tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
+	if (status & ~port->ignore_status_mask & overrun) {
+		if (tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
 			++port->icount.buf_overrun;
 	}
 #endif

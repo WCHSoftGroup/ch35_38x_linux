@@ -157,15 +157,14 @@ static void WRITE_UART_MCR(struct wch_ser_port *, unsigned char);
 static void WRITE_UART_DLL(struct wch_ser_port *, int);
 static void WRITE_UART_DLM(struct wch_ser_port *, int);
 
-static
-unsigned char
+static unsigned char
 READ_INTERRUPT_VECTOR_BYTE(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.vector) {
+	if (sp->port.vector) {
 		data = inb(sp->port.vector);
 
 		return data;
@@ -174,8 +173,7 @@ READ_INTERRUPT_VECTOR_BYTE(
 	return 0;
 }
 
-static
-unsigned int
+static unsigned int
 READ_INTERRUPT_VECTOR_WORD(
     struct wch_ser_port *sp
 )
@@ -184,7 +182,7 @@ READ_INTERRUPT_VECTOR_WORD(
 	unsigned int vet1 = 0;
 	unsigned int vet2 = 0;
 
-	if(sp->port.vector) {
+	if (sp->port.vector) {
 		vet1 = inb(sp->port.vector);
 		vet2 = inb(sp->port.vector - 0x10);
 
@@ -197,31 +195,29 @@ READ_INTERRUPT_VECTOR_WORD(
 	return 0;
 }
 
-static
-unsigned long
+static unsigned long
 READ_INTERRUPT_VECTOR_DWORD(
     struct wch_ser_port *sp
 )
 {
 	unsigned long data = 0;
 
-	if(sp->port.iobase) {
+	if (sp->port.iobase) {
 		data = inl(sp->port.chip_iobase + 0xE8);
 	}
 
 	return data;
 }
 
-static
-unsigned char
+static unsigned char
 READ_UART_RX(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			data = readb(sp->port.port_membase + UART_RX);
 		} else {
 			data = inb(sp->port.iobase + UART_RX);
@@ -233,15 +229,14 @@ READ_UART_RX(
 	return 0;
 }
 
-static
-void
+static void
 WRITE_UART_TX(
     struct wch_ser_port *sp,
     unsigned char data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_TX);
 		} else {
 			outb(data, sp->port.iobase + UART_TX);
@@ -249,15 +244,14 @@ WRITE_UART_TX(
 	}
 }
 
-static
-void
+static void
 WRITE_UART_IER(
     struct wch_ser_port *sp,
     unsigned char data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_IER);
 		} else {
 			outb(data, sp->port.iobase + UART_IER);
@@ -265,16 +259,15 @@ WRITE_UART_IER(
 	}
 }
 
-static
-unsigned char
+static unsigned char
 READ_UART_IIR(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			data = readb(sp->port.port_membase + UART_IIR);
 		} else {
 			data = inb(sp->port.iobase + UART_IIR);
@@ -286,15 +279,14 @@ READ_UART_IIR(
 	return 0;
 }
 
-static
-void
+static void
 WRITE_UART_FCR(
     struct wch_ser_port *sp,
     unsigned char data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_FCR);
 		} else {
 			outb(data, sp->port.iobase + UART_FCR);
@@ -302,16 +294,15 @@ WRITE_UART_FCR(
 	}
 }
 
-static
-unsigned char
+static unsigned char
 READ_UART_LCR(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			data = readb(sp->port.port_membase + UART_LCR);
 		} else {
 			data = inb(sp->port.iobase + UART_LCR);
@@ -323,15 +314,14 @@ READ_UART_LCR(
 	return 0;
 }
 
-static
-void
+static void
 WRITE_UART_LCR(
     struct wch_ser_port *sp,
     unsigned char data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_LCR);
 		} else {
 			outb(data, sp->port.iobase + UART_LCR);
@@ -339,15 +329,14 @@ WRITE_UART_LCR(
 	}
 }
 
-static
-void
+static void
 WRITE_UART_MCR(
     struct wch_ser_port *sp,
     unsigned char data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_MCR);
 		} else {
 			outb(data, sp->port.iobase + UART_MCR);
@@ -355,16 +344,15 @@ WRITE_UART_MCR(
 	}
 }
 
-static
-unsigned char
+static unsigned char
 READ_UART_LSR(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			data = readb(sp->port.port_membase + UART_LSR);
 		} else {
 			data = inb(sp->port.iobase + UART_LSR);
@@ -376,17 +364,15 @@ READ_UART_LSR(
 	return 0;
 }
 
-
-static
-unsigned char
+static unsigned char
 READ_UART_MSR(
     struct wch_ser_port *sp
 )
 {
 	unsigned char data = 0;
 
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			data = readb(sp->port.port_membase + UART_MSR);
 		} else {
 			data = inb(sp->port.iobase + UART_MSR);
@@ -398,16 +384,14 @@ READ_UART_MSR(
 	return 0;
 }
 
-
-static
-void
+static void
 WRITE_UART_DLL(
     struct wch_ser_port *sp,
     int data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_DLL);
 		} else {
 			outb(data, sp->port.iobase + UART_DLL);
@@ -415,15 +399,14 @@ WRITE_UART_DLL(
 	}
 }
 
-static
-void
+static void
 WRITE_UART_DLM(
     struct wch_ser_port *sp,
     int data
 )
 {
-	if(sp->port.iobase) {
-		if(ch365_32s) {
+	if (sp->port.iobase) {
+		if (ch365_32s) {
 			writeb(data, sp->port.port_membase + UART_DLM);
 		} else {
 			outb(data, sp->port.iobase + UART_DLM);
@@ -442,22 +425,21 @@ ser_handle_cts_change(
 
 	port->icount.cts++;
 
-	if(info->flags & WCH_UIF_CTS_FLOW) {
-		if(tty->hw_stopped) {
-			if(status) {
+	if (info->flags & WCH_UIF_CTS_FLOW) {
+		if (tty->hw_stopped) {
+			if (status) {
 				tty->hw_stopped = 0;
 				wch_ser_start_tx(port, 0);
 				ser_write_wakeup(port);
 			}
 		} else {
-			if(!status) {
+			if (!status) {
 				tty->hw_stopped = 1;
 				wch_ser_stop_tx(port, 0);
 			}
 		}
 	}
 }
-
 
 static _INLINE_ void
 ser_update_mctrl(
@@ -474,7 +456,7 @@ ser_update_mctrl(
 	old = port->mctrl;
 	port->mctrl = (old & ~clear) | set;
 
-	if(old != port->mctrl) {
+	if (old != port->mctrl) {
 		wch_ser_set_mctrl(port, port->mctrl);
 	}
 	spin_unlock_irqrestore(&port->lock, flags);
@@ -484,7 +466,6 @@ ser_update_mctrl(
 #define set_mctrl(port, set) ser_update_mctrl(port, set, 0)
 #define clear_mctrl(port, clear) ser_update_mctrl(port, 0, clear)
 
-
 static void
 ser_write_wakeup(
     struct ser_port *port
@@ -493,7 +474,6 @@ ser_write_wakeup(
 	struct ser_info *info = port->info;
 	tasklet_schedule(&info->tlet);
 }
-
 
 static void
 ser_stop(
@@ -505,7 +485,7 @@ ser_stop(
 	unsigned long flags;
 	int line = WCH_SER_DEVNUM(tty);
 
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
@@ -517,7 +497,6 @@ ser_stop(
 	spin_unlock_irqrestore(&port->lock, flags);
 }
 
-
 static void
 _ser_start(
     struct tty_struct *tty
@@ -525,11 +504,11 @@ _ser_start(
 {
 	struct ser_state *state = tty->driver_data;
 	struct ser_port *port = state->port;
-	if(!ser_circ_empty(&state->info->xmit) && state->info->xmit.buf && !tty->stopped && !tty->hw_stopped) {
+
+	if (!ser_circ_empty(&state->info->xmit) && state->info->xmit.buf && !tty->stopped && !tty->hw_stopped) {
 		wch_ser_start_tx(port, 1);
 	}
 }
-
 
 static void
 ser_start(
@@ -541,7 +520,7 @@ ser_start(
 	unsigned long flags;
 
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
@@ -553,7 +532,6 @@ ser_start(
 	spin_unlock_irqrestore(&port->lock, flags);
 }
 
-
 static void
 ser_tasklet_action(
     unsigned long data
@@ -562,27 +540,26 @@ ser_tasklet_action(
 	struct ser_state *state = (struct ser_state *)data;
 	struct tty_struct *tty = NULL;
 	tty = state->info->tty;
-	if(tty) {
+	if (tty) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31))
-		if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc->ops->write_wakeup) {
+		if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc->ops->write_wakeup) {
 			tty->ldisc->ops->write_wakeup(tty);
 		}
 
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27) && LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,30))
 		{
-			if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.ops->write_wakeup) {
+			if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.ops->write_wakeup) {
 				tty->ldisc.ops->write_wakeup(tty);
 			}
 		}
 #else
-		if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.write_wakeup) {
+		if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.write_wakeup) {
 			tty->ldisc.write_wakeup(tty);
 		}
 #endif
 		wake_up_interruptible(&tty->write_wait);
 	}
 }
-
 
 static int
 ser_startup(
@@ -595,24 +572,24 @@ ser_startup(
 	unsigned long page;
 	int retval = 0;
 
-	if(info->flags & WCH_UIF_INITIALIZED) {
+	if (info->flags & WCH_UIF_INITIALIZED) {
 		return 0;
 	}
 
 
-	if(info->tty) {
+	if (info->tty) {
 		set_bit(TTY_IO_ERROR, &info->tty->flags);
 	}
 
 
-	if(port->type == PORT_UNKNOWN) {
+	if (port->type == PORT_UNKNOWN) {
 		return 0;
 	}
 
 
-	if(!info->xmit.buf) {
+	if (!info->xmit.buf) {
 		page = get_zeroed_page(GFP_KERNEL);
-		if(!page) {
+		if (!page) {
 			return -ENOMEM;
 		}
 
@@ -628,16 +605,15 @@ ser_startup(
 
 	retval = wch_ser_startup(port);
 
-	if(retval == 0) {
-		if(init_hw) {
+	if (retval == 0) {
+		if (init_hw) {
 			ser_change_speed(state, NULL);
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-			if(info->tty->termios->c_cflag & CBAUD)
+			if (info->tty->termios->c_cflag & CBAUD)
 #else
-			if(info->tty->termios.c_cflag & CBAUD)
+			if (info->tty->termios.c_cflag & CBAUD)
 #endif
 			{
-				printk("%s set rtsdtr\n", __func__);
 				set_mctrl(port, TIOCM_RTS | TIOCM_DTR);
 			}
 		}
@@ -648,14 +624,13 @@ ser_startup(
 	}
 
 
-	if(retval && capable(CAP_SYS_ADMIN)) {
+	if (retval && capable(CAP_SYS_ADMIN)) {
 		retval = 0;
 	}
 	set_mctrl(port, TIOCM_OUT2);
 
 	return retval;
 }
-
 
 static void
 ser_shutdown(
@@ -666,13 +641,13 @@ ser_shutdown(
 	struct ser_port *port = state->port;
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
 
-	if(!(info->flags & WCH_UIF_INITIALIZED)) {
+	if (!(info->flags & WCH_UIF_INITIALIZED)) {
 		return;
 	}
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-	if(!info->tty || (info->tty->termios->c_cflag & HUPCL))
+	if (!info->tty || (info->tty->termios->c_cflag & HUPCL))
 #else
-	if(!info->tty || (info->tty->termios.c_cflag & HUPCL))
+	if (!info->tty || (info->tty->termios.c_cflag & HUPCL))
 #endif
 	{
 		clear_mctrl(port, TIOCM_DTR | TIOCM_RTS);
@@ -686,16 +661,16 @@ ser_shutdown(
 	synchronize_irq(port->irq);
 #endif
 
-	if(info->xmit.buf) {
+	if (info->xmit.buf) {
 		free_page((unsigned long)info->xmit.buf);
 		info->xmit.buf = NULL;
-		if(info->tmpbuf)
+		if (info->tmpbuf)
 			info->tmpbuf = NULL;
 	}
 
 	tasklet_kill(&info->tlet);
 
-	if(info->tty) {
+	if (info->tty) {
 		set_bit(TTY_IO_ERROR, &info->tty->flags);
 	}
 
@@ -706,7 +681,6 @@ ser_shutdown(
 	info->flags &= ~WCH_UIF_INITIALIZED;
 }
 
-
 static _INLINE_ void
 _ser_put_char(
     struct ser_port *port,
@@ -715,19 +689,18 @@ _ser_put_char(
 )
 {
 	unsigned long flags;
-	if(!circ->buf) {
+	if (!circ->buf) {
 		return;
 	}
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	if(ser_circ_chars_free(circ) != 0) {
+	if (ser_circ_chars_free(circ) != 0) {
 		circ->buf[circ->head] = c;
 		circ->head = (circ->head + 1) & (WCH_UART_XMIT_SIZE - 1);
 	}
 	spin_unlock_irqrestore(&port->lock, flags);
 }
-
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
 static int
@@ -745,7 +718,8 @@ ser_put_char(
 {
 	struct ser_state *state = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
 		return 0;
 #else
@@ -759,9 +733,7 @@ ser_put_char(
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
 	return 0;
 #endif
-
 }
-
 
 static void
 ser_flush_chars(
@@ -769,13 +741,13 @@ ser_flush_chars(
 )
 {
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
 	ser_start(tty);
 }
-
 
 static int
 ser_chars_in_buffer(
@@ -784,14 +756,14 @@ ser_chars_in_buffer(
 {
 	struct ser_state *state = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
 	state = tty->driver_data;
 	return ser_circ_chars_pending(&state->info->xmit);
 }
-
 
 static void
 ser_flush_buffer(
@@ -802,14 +774,15 @@ ser_flush_buffer(
 	struct ser_port *port = NULL;
 	unsigned long flags;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
 	state = tty->driver_data;
 	port = state->port;
 
-	if(!state || !state->info) {
+	if (!state || !state->info) {
 		return;
 	}
 
@@ -820,23 +793,22 @@ ser_flush_buffer(
 	wake_up_interruptible(&tty->write_wait);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31))
-	if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc->ops->write_wakeup) {
+	if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc->ops->write_wakeup) {
 		(tty->ldisc->ops->write_wakeup)(tty);
 	}
 
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27) && LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,30))
 
-	if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.ops->write_wakeup) {
+	if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.ops->write_wakeup) {
 		(tty->ldisc.ops->write_wakeup)(tty);
 	}
 
 #else
-	if((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.write_wakeup) {
+	if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) && tty->ldisc.write_wakeup) {
 		(tty->ldisc.write_wakeup)(tty);
 	}
 #endif
 }
-
 
 static void
 ser_send_xchar(
@@ -848,7 +820,8 @@ ser_send_xchar(
 	struct ser_port *port = NULL;
 	unsigned long flags;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
@@ -856,13 +829,12 @@ ser_send_xchar(
 	port = state->port;
 	port->x_char = ch;
 
-	if(ch) {
+	if (ch) {
 		spin_lock_irqsave(&port->lock, flags);
 		wch_ser_start_tx(port, 0);
 		spin_unlock_irqrestore(&port->lock, flags);
 	}
 }
-
 
 static void
 ser_throttle(
@@ -872,28 +844,27 @@ ser_throttle(
 	struct ser_state *state = NULL;
 	struct ser_port *port = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
 	state = tty->driver_data;
 	port = state->port;
-
 	port->ldisc_stop_rx = 1;
 
-	if(I_IXOFF(tty)) {
+	if (I_IXOFF(tty)) {
 		ser_send_xchar(tty, STOP_CHAR(tty));
 	}
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-	if(tty->termios->c_cflag & CRTSCTS)
+	if (tty->termios->c_cflag & CRTSCTS)
 #else
-	if(tty->termios.c_cflag & CRTSCTS)
+	if (tty->termios.c_cflag & CRTSCTS)
 #endif
 	{
 		clear_mctrl(state->port, TIOCM_RTS);
 	}
 }
-
 
 static void
 ser_unthrottle(
@@ -903,32 +874,31 @@ ser_unthrottle(
 	struct ser_state *state = NULL;
 	struct ser_port *port = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
 	state = tty->driver_data;
 	port = state->port;
-
 	port->ldisc_stop_rx = 0;
 
-	if(I_IXOFF(tty)) {
-		if(port->x_char) {
+	if (I_IXOFF(tty)) {
+		if (port->x_char) {
 			port->x_char = 0;
 		} else {
 			ser_send_xchar(tty, START_CHAR(tty));
 		}
 	}
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-	if(tty->termios->c_cflag & CRTSCTS)
+	if (tty->termios->c_cflag & CRTSCTS)
 #else
-	if(tty->termios.c_cflag & CRTSCTS)
+	if (tty->termios.c_cflag & CRTSCTS)
 #endif
 	{
 		set_mctrl(port, TIOCM_RTS);
 	}
 }
-
 
 static int
 ser_get_info(
@@ -943,7 +913,7 @@ ser_get_info(
 	tmp.line = port->line;
 	tmp.port = port->iobase;
 
-	if(WCH_HIGH_BITS_OFFSET) {
+	if (WCH_HIGH_BITS_OFFSET) {
 		tmp.port_high = (long) port->iobase >> WCH_HIGH_BITS_OFFSET;
 	}
 
@@ -956,13 +926,12 @@ ser_get_info(
 	tmp.custom_divisor = port->custom_divisor;
 	tmp.io_type = port->iotype;
 
-	if(copy_to_user(retinfo, &tmp, sizeof(*retinfo))) {
+	if (copy_to_user(retinfo, &tmp, sizeof(*retinfo))) {
 		return -EFAULT;
 	}
 
 	return 0;
 }
-
 
 static int
 ser_set_info(
@@ -981,13 +950,13 @@ ser_set_info(
 	unsigned int old_flags;
 	unsigned int new_flags;
 	int retval = 0;
-	if(copy_from_user(&new_serial, newinfo, sizeof(new_serial))) {
+	if (copy_from_user(&new_serial, newinfo, sizeof(new_serial))) {
 		return -EFAULT;
 	}
 
 	new_port = new_serial.port;
 
-	if(WCH_HIGH_BITS_OFFSET) {
+	if (WCH_HIGH_BITS_OFFSET) {
 		new_port += (unsigned long) new_serial.port_high << WCH_HIGH_BITS_OFFSET;
 	}
 
@@ -1010,15 +979,15 @@ ser_set_info(
 	new_flags = new_serial.flags;
 	old_custom_divisor = port->custom_divisor;
 
-	if(!capable(CAP_SYS_ADMIN)) {
+	if (!capable(CAP_SYS_ADMIN)) {
 		retval = -EPERM;
-		if(change_irq ||
-		   change_port ||
-		   (new_serial.baud_base != port->uartclk / 16) ||
-		   (close_delay != state->close_delay) ||
-		   (closing_wait != state->closing_wait) ||
-		   (new_serial.xmit_fifo_size != port->fifosize) ||
-		   (((new_flags ^ old_flags) & ~WCH_UPF_USR_MASK) != 0)) {
+		if (change_irq ||
+		    change_port ||
+		    (new_serial.baud_base != port->uartclk / 16) ||
+		    (close_delay != state->close_delay) ||
+		    (closing_wait != state->closing_wait) ||
+		    (new_serial.xmit_fifo_size != port->fifosize) ||
+		    (((new_flags ^ old_flags) & ~WCH_UPF_USR_MASK) != 0)) {
 			goto exit;
 		}
 
@@ -1027,18 +996,18 @@ ser_set_info(
 		goto check_and_exit;
 	}
 
-	if(change_port || change_irq) {
+	if (change_port || change_irq) {
 		retval = -EBUSY;
 
 
-		if(wch_ser_users(state) > 1) {
+		if (wch_ser_users(state) > 1) {
 			goto exit;
 		}
 
 		ser_shutdown(state);
 	}
 
-	if(change_port) {
+	if (change_port) {
 		unsigned long old_iobase;
 		unsigned int old_type;
 		unsigned int old_iotype;
@@ -1048,7 +1017,7 @@ ser_set_info(
 		old_iotype = port->iotype;
 
 
-		if(old_type != PORT_UNKNOWN) {
+		if (old_type != PORT_UNKNOWN) {
 			wch_ser_release_io(port);
 		}
 
@@ -1067,20 +1036,20 @@ ser_set_info(
 	state->closing_wait = closing_wait;
 	port->fifosize = new_serial.xmit_fifo_size;
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-	if(state->info->tty) {
+	if (state->info->tty) {
 		state->info->tty->low_latency = (port->flags & WCH_UPF_LOW_LATENCY) ? 1 : 0;
 	}
 #endif
 check_and_exit:
 	retval = 0;
-	if(port->type == PORT_UNKNOWN) {
+	if (port->type == PORT_UNKNOWN) {
 		goto exit;
 	}
 
-	if(state->info->flags & WCH_UIF_INITIALIZED) {
-		if(((old_flags ^ port->flags) & WCH_UPF_SPD_MASK) || old_custom_divisor != port->custom_divisor) {
+	if (state->info->flags & WCH_UIF_INITIALIZED) {
+		if (((old_flags ^ port->flags) & WCH_UPF_SPD_MASK) || old_custom_divisor != port->custom_divisor) {
 
-			if(port->flags & WCH_UPF_SPD_MASK) {
+			if (port->flags & WCH_UPF_SPD_MASK) {
 				printk("WCH Info : %s sets custom speed on ttyWCH%d. This is deprecated.\n", current->comm, port->line);
 			}
 			ser_change_speed(state, NULL);
@@ -1094,7 +1063,6 @@ exit:
 	return retval;
 }
 
-
 static int
 ser_write_room(
     struct tty_struct *tty
@@ -1103,7 +1071,7 @@ ser_write_room(
 	struct ser_state *state = NULL;
 	int line = WCH_SER_DEVNUM(tty);
 	int status = 0;
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
@@ -1112,7 +1080,6 @@ ser_write_room(
 	status = ser_circ_chars_free(&state->info->xmit);
 	return status;
 }
-
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10))
 static int
@@ -1137,32 +1104,32 @@ ser_write(
 	unsigned long flags;
 	int c;
 	int ret = 0;
-	if(!state || !state->info) {
+	if (!state || !state->info) {
 		return -EL3HLT;
 	}
 
 	port = state->port;
 	circ = &state->info->xmit;
 
-	if(!circ->buf) {
+	if (!circ->buf) {
 		return 0;
 	}
 
 	spin_lock_irqsave(&port->lock, flags);
-	while(1) {
+	while (1) {
 		c = CIRC_SPACE_TO_END(circ->head, circ->tail, WCH_UART_XMIT_SIZE);
-		if(count < c) {
+		if (count < c) {
 			c = count;
 		}
 
-		if(c <= 0) {
+		if (c <= 0) {
 			break;
 		}
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,9))
 		memcpy(circ->buf + circ->head, buf, c);
 #else
-		if(from_user) {
-			if(copy_from_user((circ->buf + circ->head), buf, c) == c) {
+		if (from_user) {
+			if (copy_from_user((circ->buf + circ->head), buf, c) == c) {
 				ret = -EFAULT;
 				break;
 			}
@@ -1225,7 +1192,7 @@ ser_tiocmget(
 	int result = -EIO;
 	int line = WCH_SER_DEVNUM(tty);
 
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
@@ -1234,7 +1201,7 @@ ser_tiocmget(
 
 	down(&state->sem);
 
-	if(!(tty->flags & (1 << TTY_IO_ERROR))) {
+	if (!(tty->flags & (1 << TTY_IO_ERROR))) {
 		result = port->mctrl;
 		result |= wch_ser_get_mctrl(port);
 	}
@@ -1256,7 +1223,7 @@ ser_tiocmset(
 	int ret = -EIO;
 	int line = WCH_SER_DEVNUM(tty);
 
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
@@ -1265,7 +1232,7 @@ ser_tiocmset(
 
 	down(&state->sem);
 
-	if(!(tty->flags & (1 << TTY_IO_ERROR))) {
+	if (!(tty->flags & (1 << TTY_IO_ERROR))) {
 		ser_update_mctrl(port, set, clear);
 		ret = 0;
 	}
@@ -1286,7 +1253,7 @@ ser_tiocmget(
 	struct ser_port *port;
 	int result = -EIO;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
@@ -1295,7 +1262,7 @@ ser_tiocmget(
 
 	down(&state->sem);
 
-	if((!file || !tty_hung_up_p(file)) && !(tty->flags & (1 << TTY_IO_ERROR))) {
+	if ((!file || !tty_hung_up_p(file)) && !(tty->flags & (1 << TTY_IO_ERROR))) {
 		result = port->mctrl;
 		result |= wch_ser_get_mctrl(port);
 	}
@@ -1304,7 +1271,6 @@ ser_tiocmget(
 
 	return result;
 }
-
 
 static int
 ser_tiocmset(
@@ -1318,7 +1284,7 @@ ser_tiocmset(
 	struct ser_port *port;
 	int ret = -EIO;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return 0;
 	}
 
@@ -1327,7 +1293,7 @@ ser_tiocmset(
 
 	down(&state->sem);
 
-	if((!file || !tty_hung_up_p(file)) && !(tty->flags & (1 << TTY_IO_ERROR))) {
+	if ((!file || !tty_hung_up_p(file)) && !(tty->flags & (1 << TTY_IO_ERROR))) {
 		ser_update_mctrl(port, set, clear);
 		ret = 0;
 	}
@@ -1336,7 +1302,6 @@ ser_tiocmset(
 
 	return ret;
 }
-
 
 #else
 static int
@@ -1348,19 +1313,19 @@ ser_get_modem_info(
 	struct ser_port *port = NULL;
 	int line;
 	unsigned int result;
-	if(!state) {
+	if (!state) {
 		return -EIO;
 	}
 
 	port = state->port;
 
-	if(!port) {
+	if (!port) {
 		return -EIO;
 	}
 
 	line = port->line;
 
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return -EIO;
 	}
 
@@ -1370,7 +1335,6 @@ ser_get_modem_info(
 	put_user(result, (unsigned long *)value);
 	return 0;
 }
-
 
 static int
 ser_set_modem_info(
@@ -1384,69 +1348,69 @@ ser_set_modem_info(
 	unsigned int set = 0;
 	unsigned int clr = 0;
 	unsigned int arg;
-	if(!state) {
+	if (!state) {
 		return -EIO;
 	}
 
 	port = state->port;
 
-	if(!port) {
+	if (!port) {
 		return -EIO;
 	}
 
 	line = port->line;
 
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return -EIO;
 	}
 
 	get_user(arg, (unsigned long *)value);
 
-	switch(cmd) {
+	switch (cmd) {
 	case TIOCMBIS: {
-		if(arg & TIOCM_RTS) {
+		if (arg & TIOCM_RTS) {
 			set |= TIOCM_RTS;
 		}
 
-		if(arg & TIOCM_DTR) {
+		if (arg & TIOCM_DTR) {
 			set |= TIOCM_DTR;
 		}
 
-		if(arg & TIOCM_LOOP) {
+		if (arg & TIOCM_LOOP) {
 			set |= TIOCM_LOOP;
 		}
 		break;
 	}
 
 	case TIOCMBIC: {
-		if(arg & TIOCM_RTS) {
+		if (arg & TIOCM_RTS) {
 			clr |= TIOCM_RTS;
 		}
 
-		if(arg & TIOCM_DTR) {
+		if (arg & TIOCM_DTR) {
 			clr |= TIOCM_DTR;
 		}
 
-		if(arg & TIOCM_LOOP) {
+		if (arg & TIOCM_LOOP) {
 			clr |= TIOCM_LOOP;
 		}
 		break;
 	}
 
 	case TIOCMSET: {
-		if(arg & TIOCM_RTS) {
+		if (arg & TIOCM_RTS) {
 			set |= TIOCM_RTS;
 		} else {
 			clr |= TIOCM_RTS;
 		}
 
-		if(arg & TIOCM_DTR) {
+		if (arg & TIOCM_DTR) {
 			set |= TIOCM_DTR;
 		} else {
 			clr |= TIOCM_DTR;
 		}
 
-		if(arg & TIOCM_LOOP) {
+		if (arg & TIOCM_LOOP) {
 			set |= TIOCM_LOOP;
 		} else {
 			clr |= TIOCM_LOOP;
@@ -1463,7 +1427,6 @@ ser_set_modem_info(
 	return 0;
 }
 #endif
-
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
 static int
@@ -1482,7 +1445,7 @@ ser_break_ctl(
 	struct ser_state *state = NULL;
 	struct ser_port *port = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
 		return 0;
 #else
@@ -1495,7 +1458,7 @@ ser_break_ctl(
 
 	down(&state->sem);
 
-	if(port->type != PORT_UNKNOWN) {
+	if (port->type != PORT_UNKNOWN) {
 		wch_ser_break_ctl(port, break_state);
 	}
 
@@ -1505,7 +1468,6 @@ ser_break_ctl(
 	return 0;
 #endif
 }
-
 
 static int
 ser_wait_modem_status(
@@ -1527,29 +1489,25 @@ ser_wait_modem_status(
 
 	add_wait_queue(&state->info->delta_msr_wait, &wait);
 
-	for(;;) {
+	for (;;) {
 		spin_lock_irq(&port->lock);
 		memcpy(&cnow, &port->icount, sizeof(struct ser_icount));
 		spin_unlock_irq(&port->lock);
-
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		if(((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
-		   ((arg & TIOCM_DSR) && (cnow.dsr != cprev.dsr)) ||
-		   ((arg & TIOCM_CD)  && (cnow.dcd != cprev.dcd)) ||
-		   ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts))) {
+		if (((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
+		    ((arg & TIOCM_DSR) && (cnow.dsr != cprev.dsr)) ||
+		    ((arg & TIOCM_CD)  && (cnow.dcd != cprev.dcd)) ||
+		    ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts))) {
 			ret = 0;
 			break;
 		}
 
 		schedule();
-
-
-		if(signal_pending(current)) {
+		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
 			break;
 		}
-
 		cprev = cnow;
 	}
 
@@ -1557,7 +1515,6 @@ ser_wait_modem_status(
 	remove_wait_queue(&state->info->delta_msr_wait, &wait);
 	return ret;
 }
-
 
 static int
 ser_get_count(
@@ -1610,14 +1567,14 @@ ser_ioctl(
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
 	int status = 0;
 #endif
-	if(line < wch_ser_port_total_cnt) {
+	if (line < wch_ser_port_total_cnt) {
 		state = tty->driver_data;
 	}
 
 
-	switch(cmd) {
+	switch (cmd) {
 	case TIOCGSERIAL: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			ret = ser_get_info(state, (struct serial_struct *)arg);
 		}
 		break;
@@ -1625,7 +1582,7 @@ ser_ioctl(
 
 
 	case TIOCSSERIAL: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			state->port->setserial_flag = WCH_SER_BAUD_SETSERIAL;
 			ret = ser_set_info(state, (struct serial_struct *)arg);
 		}
@@ -1639,7 +1596,7 @@ ser_ioctl(
 		kterm = tty->termios;
 		mutex_unlock(&tty->throttle_mutex);
 
-		if(kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
 			ret = -EFAULT;
 		else
 			ret = 0;
@@ -1649,7 +1606,7 @@ ser_ioctl(
 		kterm = tty->termios;
 		mutex_unlock(&tty->termios_mutex);
 
-		if(kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
 			ret = -EFAULT;
 		else
 			ret = 0;
@@ -1659,18 +1616,16 @@ ser_ioctl(
 		kterm = tty->termios;
 		mutex_unlock(&tty->termios_mutex);
 
-		if(kernel_termios_to_user_termios_1((struct termios __user *)arg, kterm))
+		if (kernel_termios_to_user_termios_1((struct termios __user *)arg, kterm))
 			ret = -EFAULT;
 		else
 			ret = 0;
-
-
 #endif
 		break;
 	}
 
 	case TCSETS: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			state->port->flags &= ~(WCH_UPF_SPD_HI | WCH_UPF_SPD_VHI | WCH_UPF_SPD_SHI | WCH_UPF_SPD_WARP);
 			state->port->setserial_flag = WCH_SER_BAUD_NOTSETSER;
 			ser_update_termios(state);
@@ -1684,10 +1639,10 @@ ser_ioctl(
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
 	case TIOCMGET: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			ret = verify_area(VERIFY_WRITE, (void *)arg, sizeof(unsigned int));
 
-			if(ret) {
+			if (ret) {
 				return ret;
 			}
 
@@ -1701,7 +1656,7 @@ ser_ioctl(
 	case TIOCMBIS:
 	case TIOCMBIC:
 	case TIOCMSET: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			status = ser_set_modem_info(state, cmd, (unsigned int *)arg);
 			return status;
 		}
@@ -1709,42 +1664,37 @@ ser_ioctl(
 	}
 #endif
 
-
 	case TIOCSERGWILD:
 	case TIOCSERSWILD: {
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			ret = 0;
 		}
 		break;
 	}
 	case TIOCMIWAIT:
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			ret = ser_wait_modem_status(state, arg);
 		}
 		break;
-
-
 	case TIOCGICOUNT:
-		if(line < wch_ser_port_total_cnt) {
+		if (line < wch_ser_port_total_cnt) {
 			ret = ser_get_count(state, (struct serial_icounter_struct *)arg);
 		}
 		break;
 
 	}
 
-	if(ret != -ENOIOCTLCMD) {
+	if (ret != -ENOIOCTLCMD) {
 		goto out;
 	}
 
-	if(tty->flags & (1 << TTY_IO_ERROR)) {
+	if (tty->flags & (1 << TTY_IO_ERROR)) {
 		ret = -EIO;
 		goto out;
 	}
 out:
 	return ret;
-
 }
-
 
 static void
 ser_hangup(
@@ -1753,7 +1703,8 @@ ser_hangup(
 {
 	struct ser_state *state = NULL;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
@@ -1761,7 +1712,7 @@ ser_hangup(
 
 	down(&state->sem);
 
-	if(state->info && state->info->flags & WCH_UIF_NORMAL_ACTIVE) {
+	if (state->info && state->info->flags & WCH_UIF_NORMAL_ACTIVE) {
 		ser_flush_buffer(tty);
 		ser_shutdown(state);
 		state->count = 0;
@@ -1774,7 +1725,6 @@ ser_hangup(
 	up(&state->sem);
 }
 
-
 unsigned int
 ser_get_divisor(
     struct ser_port *port,
@@ -1782,10 +1732,11 @@ ser_get_divisor(
 )
 {
 	unsigned int quot;
-	if(baud == 38400 && (port->flags & WCH_UPF_SPD_MASK) == WCH_UPF_SPD_CUST) {
+
+	if (baud == 38400 && (port->flags & WCH_UPF_SPD_MASK) == WCH_UPF_SPD_CUST) {
 		quot = port->custom_divisor;
 	} else {
-		if(baud > port->baud_base)
+		if (baud > port->baud_base)
 			quot = port->uartclk * 24 / 16 / baud;
 		else
 			quot = port->uartclk / 16 / baud;
@@ -1809,66 +1760,65 @@ ser_get_baud_rate(
 	int hung_up = 0;
 	unsigned int flags = port->flags & WCH_UPF_SPD_MASK;
 
-	if(port->flags & WCH_UPF_SPD_MASK) {
+	if (port->flags & WCH_UPF_SPD_MASK) {
 		altbaud = 38400;
-		if(flags == WCH_UPF_SPD_HI) {
+		if (flags == WCH_UPF_SPD_HI) {
 			altbaud = 57600;
 		}
 
-		if(flags == WCH_UPF_SPD_VHI) {
+		if (flags == WCH_UPF_SPD_VHI) {
 			altbaud = 115200;
 		}
 
-		if(flags == WCH_UPF_SPD_SHI) {
+		if (flags == WCH_UPF_SPD_SHI) {
 			altbaud = 230400;
 		}
 
-		if(flags == WCH_UPF_SPD_WARP) {
+		if (flags == WCH_UPF_SPD_WARP) {
 			altbaud = 460800;
 		}
 	}
 
-	for(try = 0; try < 2; try++) {
-					baud = tty_termios_baud_rate(termios);
+	for (try = 0; try < 2; try++) {
+		baud = tty_termios_baud_rate(termios);
 
-					if(try == 0 && baud == 38400)
-							baud = altbaud;
+		if (try == 0 && baud == 38400)
+				baud = altbaud;
 
-					if(baud == 0) {
-						hung_up = 1;
-						baud = 9600;
-					}
+		if (baud == 0) {
+			hung_up = 1;
+			baud = 9600;
+		}
 
-					if(baud >= min && baud <= max) {
-						return baud;
-					}
+		if (baud >= min && baud <= max) {
+			return baud;
+		}
 
-					termios->c_cflag &= ~CBAUD;
-					if(old) {
-						baud = tty_termios_baud_rate(old);
-						if(!hung_up)
-							tty_termios_encode_baud_rate(termios,
-							                             baud, baud);
-						old = NULL;
-						continue;
-					}
-					/*
-					 * As a last resort, if the range cannot be met then clip to
-					 * the nearest chip supported rate.
-					 */
-					if(!hung_up) {
-						if(baud <= min)
-							tty_termios_encode_baud_rate(termios,
-							                             min + 1, min + 1);
-						else
-							tty_termios_encode_baud_rate(termios,
-							                             max - 1, max - 1);
-					}
-				}
+		termios->c_cflag &= ~CBAUD;
+		if (old) {
+			baud = tty_termios_baud_rate(old);
+			if (!hung_up)
+				tty_termios_encode_baud_rate(termios,
+				                             baud, baud);
+			old = NULL;
+			continue;
+		}
+		/*
+		 * As a last resort, if the range cannot be met then clip to
+		 * the nearest chip supported rate.
+		 */
+		if (!hung_up) {
+			if (baud <= min)
+				tty_termios_encode_baud_rate(termios,
+				                             min + 1, min + 1);
+			else
+				tty_termios_encode_baud_rate(termios,
+				                             max - 1, max - 1);
+		}
+	}
 
 	return 0;
 }
-
 
 static void
 ser_change_speed(
@@ -1880,19 +1830,19 @@ ser_change_speed(
 	struct ser_port *port = state->port;
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
 	struct WCHTERMIOS *termios;
-	if(!tty || !tty->termios || port->type == PORT_UNKNOWN) {
+	if (!tty || !tty->termios || port->type == PORT_UNKNOWN) {
 		return;
 	}
 
 	termios = tty->termios;
 
-	if(termios->c_cflag & CRTSCTS) {
+	if (termios->c_cflag & CRTSCTS) {
 		state->info->flags |= WCH_UIF_CTS_FLOW;
 	} else {
 		state->info->flags &= ~WCH_UIF_CTS_FLOW;
 	}
 
-	if(termios->c_cflag & CLOCAL) {
+	if (termios->c_cflag & CLOCAL) {
 		state->info->flags &= ~WCH_UIF_CHECK_CD;
 	} else {
 		state->info->flags |= WCH_UIF_CHECK_CD;
@@ -1900,17 +1850,17 @@ ser_change_speed(
 	wch_ser_set_termios(port, termios, old_termios);
 #else
 	struct WCHTERMIOS termios;
-	if(!tty || port->type == PORT_UNKNOWN) {
+	if (!tty || port->type == PORT_UNKNOWN) {
 		return;
 	}
 	termios = tty->termios;
-	if(termios.c_cflag & CRTSCTS) {
+	if (termios.c_cflag & CRTSCTS) {
 		state->info->flags |= WCH_UIF_CTS_FLOW;
 	} else {
 		state->info->flags &= ~WCH_UIF_CTS_FLOW;
 	}
 
-	if(termios.c_cflag & CLOCAL) {
+	if (termios.c_cflag & CLOCAL) {
 		state->info->flags &= ~WCH_UIF_CHECK_CD;
 	} else {
 		state->info->flags |= WCH_UIF_CHECK_CD;
@@ -1918,7 +1868,6 @@ ser_change_speed(
 	wch_ser_set_termios(port, &termios, old_termios);
 #endif
 }
-
 
 static void
 ser_set_termios(
@@ -1934,7 +1883,7 @@ ser_set_termios(
 	unsigned int cflag = tty->termios.c_cflag;
 #endif
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
@@ -1943,9 +1892,9 @@ ser_set_termios(
 #define RELEVANT_IFLAG(iflag)   ((iflag) & (IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK))
 
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-	if((cflag ^ old_termios->c_cflag) == 0 && RELEVANT_IFLAG(tty->termios->c_iflag ^ old_termios->c_iflag) == 0)
+	if ((cflag ^ old_termios->c_cflag) == 0 && RELEVANT_IFLAG(tty->termios->c_iflag ^ old_termios->c_iflag) == 0)
 #else
-	if((cflag ^ old_termios->c_cflag) == 0 && RELEVANT_IFLAG(tty->termios.c_iflag ^ old_termios->c_iflag) == 0)
+	if ((cflag ^ old_termios->c_cflag) == 0 && RELEVANT_IFLAG(tty->termios.c_iflag ^ old_termios->c_iflag) == 0)
 #endif
 	{
 		return;
@@ -1954,28 +1903,26 @@ ser_set_termios(
 	ser_change_speed(state, old_termios);
 
 	/* Drop RTS and DTR */
-	if((cflag & CBAUD) == B0) {
+	if ((cflag & CBAUD) == B0) {
 		clear_mctrl(state->port, TIOCM_RTS | TIOCM_DTR);
 	} else {
 		/* Ensure RTS and DTR are raised when baudrate changed from 0 */
-		if(old_termios && ((old_termios->c_cflag & CBAUD) == B0)) {
+		if (old_termios && ((old_termios->c_cflag & CBAUD) == B0)) {
 			unsigned int mask = TIOCM_DTR;
-			if(!(cflag & CRTSCTS) || !test_bit(TTY_THROTTLED, &tty->flags)) {
+			if (!(cflag & CRTSCTS) || !test_bit(TTY_THROTTLED, &tty->flags)) {
 				mask |= TIOCM_RTS;
 			}
 			set_mctrl(state->port, mask);
 		}
 	}
 
-	if((old_termios->c_cflag & CRTSCTS) && !(cflag & CRTSCTS)) {
+	if ((old_termios->c_cflag & CRTSCTS) && !(cflag & CRTSCTS)) {
 		spin_lock_irqsave(&state->port->lock, flags);
 		tty->hw_stopped = 0;
 		_ser_start(tty);
 		spin_unlock_irqrestore(&state->port->lock, flags);
 	}
-
 }
-
 
 static void
 ser_update_termios(
@@ -1983,24 +1930,20 @@ ser_update_termios(
 )
 {
 	struct tty_struct *tty = state->info->tty;
-//    struct ser_port *port = state->port;
+	struct ser_port *port = state->port;
 
-	if(!(tty->flags & (1 << TTY_IO_ERROR))) {
+	if (!(tty->flags & (1 << TTY_IO_ERROR))) {
 		ser_change_speed(state, NULL);
-		// disclaimed on 20200929
-		/*
-		#if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
 		if (tty->termios->c_cflag & CBAUD)
-		#else
+#else
 		if (tty->termios.c_cflag & CBAUD)
-		#endif
+#endif
 		{
-		    set_mctrl(port, TIOCM_DTR | TIOCM_RTS);
+			set_mctrl(port, TIOCM_DTR | TIOCM_RTS);
 		}
-		*/
 	}
 }
-
 
 static void
 ser_update_timeout(
@@ -2010,7 +1953,8 @@ ser_update_timeout(
 )
 {
 	unsigned int bits;
-	switch(cflag & CSIZE) {
+
+	switch (cflag & CSIZE) {
 	case CS5:
 		bits = 7;
 		break;
@@ -2028,11 +1972,11 @@ ser_update_timeout(
 		break;
 	}
 
-	if(cflag & CSTOPB) {
+	if (cflag & CSTOPB) {
 		bits++;
 	}
 
-	if(cflag & PARENB) {
+	if (cflag & PARENB) {
 		bits++;
 	}
 
@@ -2040,7 +1984,6 @@ ser_update_timeout(
 
 	port->timeout = (HZ * bits) / baud + HZ / 50;
 }
-
 
 static struct
 ser_state *ser_get(
@@ -2054,31 +1997,31 @@ ser_state *ser_get(
 
 	state = drv->state + line;
 
-	if(down_interruptible(&state->sem)) {
+	if (down_interruptible(&state->sem)) {
 		state = ERR_PTR(-ERESTARTSYS);
 		goto out;
 	}
 
 	state->count++;
 
-	if(!state->port) {
+	if (!state->port) {
 		state->count--;
 		up(&state->sem);
 		state = ERR_PTR(-ENXIO);
 		goto out;
 	}
 
-	if(!state->port->iobase) {
+	if (!state->port->iobase) {
 		state->count--;
 		up(&state->sem);
 		state = ERR_PTR(-ENXIO);
 		goto out;
 	}
 
-	if(!state->info) {
+	if (!state->info) {
 		state->info = kmalloc(sizeof(struct ser_info), GFP_KERNEL);
 
-		if(state->info) {
+		if (state->info) {
 			memset(state->info, 0, sizeof(struct ser_info));
 			init_waitqueue_head(&state->info->open_wait);
 			init_waitqueue_head(&state->info->delta_msr_wait);
@@ -2098,7 +2041,6 @@ out:
 	return state;
 }
 
-
 static int
 ser_block_til_ready(
     struct file *filp,
@@ -2114,40 +2056,40 @@ ser_block_til_ready(
 
 	add_wait_queue(&info->open_wait, &wait);
 
-	while(1) {
+	while (1) {
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		if(tty_hung_up_p(filp) || info->tty == NULL) {
+		if (tty_hung_up_p(filp) || info->tty == NULL) {
 			break;
 		}
 
-		if(!(info->flags & WCH_UIF_INITIALIZED)) {
+		if (!(info->flags & WCH_UIF_INITIALIZED)) {
 			break;
 		}
 
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-		if((filp->f_flags & O_NONBLOCK) ||
-		   (info->tty->termios->c_cflag & CLOCAL) ||
-		   (info->tty->flags & (1 << TTY_IO_ERROR)))
+		if ((filp->f_flags & O_NONBLOCK) ||
+		    (info->tty->termios->c_cflag & CLOCAL) ||
+		    (info->tty->flags & (1 << TTY_IO_ERROR)))
 #else
-		if((filp->f_flags & O_NONBLOCK) ||
-		   (info->tty->termios.c_cflag & CLOCAL) ||
-		   (info->tty->flags & (1 << TTY_IO_ERROR)))
+		if ((filp->f_flags & O_NONBLOCK) ||
+		    (info->tty->termios.c_cflag & CLOCAL) ||
+		    (info->tty->flags & (1 << TTY_IO_ERROR)))
 #endif
 		{
 			break;
 		}
 
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-		if(info->tty->termios->c_cflag & CBAUD)
+		if (info->tty->termios->c_cflag & CBAUD)
 #else
-		if(info->tty->termios.c_cflag & CBAUD)
+		if (info->tty->termios.c_cflag & CBAUD)
 #endif
 		{
 			set_mctrl(port, TIOCM_DTR);
 		}
 
-		if(wch_ser_get_mctrl(port) & TIOCM_CAR) {
+		if (wch_ser_get_mctrl(port) & TIOCM_CAR) {
 			break;
 		}
 
@@ -2155,7 +2097,7 @@ ser_block_til_ready(
 		schedule();
 		down(&state->sem);
 
-		if(signal_pending(current)) {
+		if (signal_pending(current)) {
 			break;
 		}
 	}
@@ -2166,17 +2108,16 @@ ser_block_til_ready(
 	state->count++;
 	info->blocked_open--;
 
-	if(signal_pending(current)) {
+	if (signal_pending(current)) {
 		return -ERESTARTSYS;
 	}
 
-	if(!info->tty || tty_hung_up_p(filp)) {
+	if (!info->tty || tty_hung_up_p(filp)) {
 		return -EAGAIN;
 	}
 
 	return 0;
 }
-
 
 static void
 ser_wait_until_sent(
@@ -2189,14 +2130,14 @@ ser_wait_until_sent(
 	unsigned long char_time;
 	unsigned long expire;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line >= wch_ser_port_total_cnt) {
+	if (line >= wch_ser_port_total_cnt) {
 		return;
 	}
 
 	state = tty->driver_data;
 	port = state->port;
 
-	if(port->type == PORT_UNKNOWN || port->fifosize == 0) {
+	if (port->type == PORT_UNKNOWN || port->fifosize == 0) {
 		return;
 	}
 
@@ -2204,29 +2145,29 @@ ser_wait_until_sent(
 
 	char_time = char_time / 5;
 
-	if(char_time == 0) {
+	if (char_time == 0) {
 		char_time = 1;
 	}
 
-	if(timeout && timeout < char_time) {
+	if (timeout && timeout < char_time) {
 		char_time = timeout;
 	}
 
-	if(timeout == 0 || timeout > 2 * port->timeout) {
+	if (timeout == 0 || timeout > 2 * port->timeout) {
 		timeout = 2 * port->timeout;
 	}
 
 	expire = jiffies + timeout;
 
-	while(!wch_ser_tx_empty(port)) {
+	while (!wch_ser_tx_empty(port)) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule_timeout(char_time);
 
-		if(signal_pending(current)) {
+		if (signal_pending(current)) {
 			break;
 		}
 
-		if(time_after(jiffies, expire)) {
+		if (time_after(jiffies, expire)) {
 			break;
 		}
 	}
@@ -2249,20 +2190,20 @@ ser_open(
 	int retval = 0;
 	int line = WCH_SER_DEVNUM(tty);
 
-	if(line < wch_ser_port_total_cnt) {
+	if (line < wch_ser_port_total_cnt) {
 		retval = -ENODEV;
 
-		if(line >= wch_ser_port_total_cnt) {
+		if (line >= wch_ser_port_total_cnt) {
 			goto fail;
 		}
 
 		state = ser_get(drv, line);
-		if(IS_ERR(state)) {
+		if (IS_ERR(state)) {
 			retval = PTR_ERR(state);
 			goto fail;
 		}
 
-		if(!state) {
+		if (!state) {
 			goto fail;
 		}
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
@@ -2275,7 +2216,7 @@ ser_open(
 		tty->driver_data = state;
 		state->info->tty = tty;
 
-		if(tty_hung_up_p(filp)) {
+		if (tty_hung_up_p(filp)) {
 			retval = -EAGAIN;
 			state->count--;
 			up(&state->sem);
@@ -2287,13 +2228,13 @@ ser_open(
 #endif
 		retval = ser_startup(state, 0);
 
-		if(retval == 0) {
+		if (retval == 0) {
 			retval = ser_block_til_ready(filp, state);
 		}
 
 		up(&state->sem);
 
-		if(retval == 0 && !(state->info->flags & WCH_UIF_NORMAL_ACTIVE)) {
+		if (retval == 0 && !(state->info->flags & WCH_UIF_NORMAL_ACTIVE)) {
 			state->info->flags |= WCH_UIF_NORMAL_ACTIVE;
 
 			ser_update_termios(state);
@@ -2320,40 +2261,40 @@ ser_close(
 	struct ser_state *state = tty->driver_data;
 	struct ser_port *port;
 	int line = WCH_SER_DEVNUM(tty);
-	if(line < wch_ser_port_total_cnt) {
-		if(!state || !state->port) {
+	if (line < wch_ser_port_total_cnt) {
+		if (!state || !state->port) {
 			return;
 		}
 
 		port = state->port;
 
 		down(&state->sem);
-		if(tty_hung_up_p(filp)) {
+		if (tty_hung_up_p(filp)) {
 			goto done;
 		}
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
-		if((tty->count == 1) && (state->count != 1)) {
+		if ((tty->count == 1) && (state->count != 1)) {
 			printk("WCH Info : bad serial port count; tty->count is 1, state->count is %d\n", state->count);
 			state->count = 1;
 		}
 #endif
 
-		if(--state->count < 0) {
+		if (--state->count < 0) {
 			printk("WCH Info : bad serial port count for ttyWCH%d: %d\n", port->line, state->count);
 			state->count = 0;
 		}
 
-		if(state->count) {
+		if (state->count) {
 			goto done;
 		}
 
 		tty->closing = 1;
 
-		if(state->closing_wait != WCH_USF_CLOSING_WAIT_NONE) {
+		if (state->closing_wait != WCH_USF_CLOSING_WAIT_NONE) {
 			tty_wait_until_sent(tty, state->closing_wait);
 		}
 
-		if(state->info->flags & WCH_UIF_INITIALIZED) {
+		if (state->info->flags & WCH_UIF_INITIALIZED) {
 			unsigned long flags;
 			spin_lock_irqsave(&port->lock, flags);
 			wch_ser_stop_rx(port);
@@ -2368,34 +2309,34 @@ ser_close(
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31))
 
 		tty_ldisc_flush(tty);
-		/*        if (tty->ldisc->ops->flush_buffer)
-		        {
-		            tty->ldisc->ops->flush_buffer(tty);
-		        }
+		/*
+		if (tty->ldisc->ops->flush_buffer) {
+            tty->ldisc->ops->flush_buffer(tty);
+        }
 		*/
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)&& LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,30) )
 		{
-			if(tty->ldisc.ops->flush_buffer) {
+			if (tty->ldisc.ops->flush_buffer) {
 				tty->ldisc.ops->flush_buffer(tty);
 			}
 		}
 #else
 
-		if(tty->ldisc.flush_buffer) {
+		if (tty->ldisc.flush_buffer) {
 			tty->ldisc.flush_buffer(tty);
 		}
 
 #endif
 
 		tty->closing = 0;
-		if(state->info->tty)
+		if (state->info->tty)
 			state->info->tty = NULL;
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 8, 0))
-		if(state->port0.tty)
+		if (state->port0.tty)
 			tty_port_tty_set(&state->port0, NULL);	//20140606 add
 #endif
-		if(state->info->blocked_open) {
-			if(state->close_delay) {
+		if (state->info->blocked_open) {
+			if (state->close_delay) {
 				set_current_state(TASK_INTERRUPTIBLE);
 				schedule_timeout(state->close_delay);
 			}
@@ -2413,9 +2354,7 @@ done:
 #endif
 
 	}
-
 }
-
 
 static void
 wch_ser_set_mctrl(
@@ -2426,23 +2365,23 @@ wch_ser_set_mctrl(
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
 	unsigned char mcr = 0;
 
-	if(mctrl & TIOCM_RTS) {
+	if (mctrl & TIOCM_RTS) {
 		mcr |= UART_MCR_RTS;
 	}
 
-	if(mctrl & TIOCM_DTR) {
+	if (mctrl & TIOCM_DTR) {
 		mcr |= UART_MCR_DTR;
 	}
 
-	if(mctrl & TIOCM_OUT1) {
+	if (mctrl & TIOCM_OUT1) {
 		mcr |= UART_MCR_OUT1;
 	}
 
-	if(mctrl & TIOCM_OUT2) {
+	if (mctrl & TIOCM_OUT2) {
 		mcr |= UART_MCR_OUT2;
 	}
 
-	if(mctrl & TIOCM_LOOP) {
+	if (mctrl & TIOCM_LOOP) {
 		mcr |= UART_MCR_LOOP;
 	}
 
@@ -2450,7 +2389,6 @@ wch_ser_set_mctrl(
 
 	WRITE_UART_MCR(sp, mcr);
 }
-
 
 static unsigned int
 wch_ser_tx_empty(
@@ -2467,7 +2405,6 @@ wch_ser_tx_empty(
 	return ret;
 }
 
-
 static unsigned int
 wch_ser_get_mctrl(
     struct ser_port *port
@@ -2481,25 +2418,24 @@ wch_ser_get_mctrl(
 	status = READ_UART_MSR(sp);
 	spin_unlock_irqrestore(&sp->port.lock, flags);
 
-	if(status & UART_MSR_DCD) {
+	if (status & UART_MSR_DCD) {
 		ret |= TIOCM_CAR;
 	}
 
-	if(status & UART_MSR_RI) {
+	if (status & UART_MSR_RI) {
 		ret |= TIOCM_RNG;
 	}
 
-	if(status & UART_MSR_DSR) {
+	if (status & UART_MSR_DSR) {
 		ret |= TIOCM_DSR;
 	}
 
-	if(status & UART_MSR_CTS) {
+	if (status & UART_MSR_CTS) {
 		ret |= TIOCM_CTS;
 	}
 
 	return ret;
 }
-
 
 static void
 wch_ser_stop_tx(
@@ -2508,12 +2444,11 @@ wch_ser_stop_tx(
 )
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
-	if(sp->ier & UART_IER_THRI) {
+	if (sp->ier & UART_IER_THRI) {
 		sp->ier &= ~UART_IER_THRI;
 		WRITE_UART_IER(sp, sp->ier);
 	}
 }
-
 
 static void
 wch_ser_start_tx(
@@ -2522,12 +2457,11 @@ wch_ser_start_tx(
 )
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
-	if(!(sp->ier & UART_IER_THRI)) {
+	if (!(sp->ier & UART_IER_THRI)) {
 		sp->ier |= UART_IER_THRI;
 		WRITE_UART_IER(sp, sp->ier);
 	}
 }
-
 
 static void
 wch_ser_stop_rx(
@@ -2540,7 +2474,6 @@ wch_ser_stop_rx(
 	WRITE_UART_IER(sp, sp->ier);
 }
 
-
 static void
 wch_ser_enable_ms(
     struct ser_port *port
@@ -2550,7 +2483,6 @@ wch_ser_enable_ms(
 	sp->ier |= UART_IER_MSI;
 	WRITE_UART_IER(sp, sp->ier);
 }
-
 
 static void
 wch_ser_break_ctl(
@@ -2562,7 +2494,7 @@ wch_ser_break_ctl(
 	unsigned long flags;
 	spin_lock_irqsave(&sp->port.lock, flags);
 
-	if(break_state == -1) {
+	if (break_state == -1) {
 		sp->lcr |= UART_LCR_SBC;
 	} else {
 		sp->lcr &= ~UART_LCR_SBC;
@@ -2571,7 +2503,6 @@ wch_ser_break_ctl(
 	WRITE_UART_LCR(sp, sp->lcr);
 	spin_unlock_irqrestore(&sp->port.lock, flags);
 }
-
 
 static int
 wch_ser_startup(
@@ -2583,7 +2514,7 @@ wch_ser_startup(
 	sp->capabilities = wch_uart_config[sp->port.type].flags;
 	sp->mcr = 0;
 
-	if(sp->capabilities & UART_CLEAR_FIFO) {
+	if (sp->capabilities & UART_CLEAR_FIFO) {
 		WRITE_UART_FCR(sp, UART_FCR_ENABLE_FIFO);
 		WRITE_UART_FCR(sp, UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT);
 		WRITE_UART_FCR(sp, 0);
@@ -2594,7 +2525,7 @@ wch_ser_startup(
 	(void) READ_UART_IIR(sp);
 	(void) READ_UART_MSR(sp);
 
-	if(!(sp->port.flags & WCH_UPF_BUGGY_UART) && (READ_UART_LSR(sp) == 0xff)) {
+	if (!(sp->port.flags & WCH_UPF_BUGGY_UART) && (READ_UART_LSR(sp) == 0xff)) {
 		printk("WCH Info : ttyWCH%d: LSR safety check engaged!\n", sp->port.line);
 		return -ENODEV;
 	}
@@ -2611,7 +2542,6 @@ wch_ser_startup(
 	(void) READ_UART_MSR(sp);
 	return 0;
 }
-
 
 static void
 wch_ser_shutdown(
@@ -2631,7 +2561,6 @@ wch_ser_shutdown(
 	(void) READ_UART_RX(sp);
 }
 
-
 static unsigned int
 wch_ser_get_divisor(
     struct ser_port *port,
@@ -2640,16 +2569,15 @@ wch_ser_get_divisor(
 {
 	unsigned int quot;
 
-	if((port->flags & WCH_UPF_MAGIC_MULTIPLIER) && baud == (port->uartclk / 4)) {
+	if ((port->flags & WCH_UPF_MAGIC_MULTIPLIER) && baud == (port->uartclk / 4)) {
 		quot = 0x8001;
-	} else if((port->flags & WCH_UPF_MAGIC_MULTIPLIER) && baud == (port->uartclk / 8)) {
+	} else if ((port->flags & WCH_UPF_MAGIC_MULTIPLIER) && baud == (port->uartclk / 8)) {
 		quot = 0x8002;
 	} else {
 		quot = ser_get_divisor(port, baud);
 	}
 	return quot;
 }
-
 
 static void
 wch_ser_set_termios(
@@ -2664,7 +2592,7 @@ wch_ser_set_termios(
 	unsigned long flags;
 	unsigned int baud;
 	unsigned int quot;
-	switch(termios->c_cflag & CSIZE) {
+	switch (termios->c_cflag & CSIZE) {
 	case CS5:
 		cval = 0x00;
 		break;
@@ -2683,20 +2611,20 @@ wch_ser_set_termios(
 		break;
 	}
 
-	if(termios->c_cflag & CSTOPB) {
+	if (termios->c_cflag & CSTOPB) {
 		cval |= 0x04;
 	}
 
-	if(termios->c_cflag & PARENB) {
+	if (termios->c_cflag & PARENB) {
 		cval |= UART_LCR_PARITY;
 	}
 
-	if(!(termios->c_cflag & PARODD)) {
+	if (!(termios->c_cflag & PARODD)) {
 		cval |= UART_LCR_EPAR;
 	}
 
 #ifdef CMSPAR
-	if(termios->c_cflag & CMSPAR) {
+	if (termios->c_cflag & CMSPAR) {
 		cval |= UART_LCR_SPAR;
 	}
 #endif
@@ -2705,8 +2633,8 @@ wch_ser_set_termios(
 	baud = ser_get_baud_rate(port, termios, old, 0, port->uartclk * 24 / 16);
 
 	quot = wch_ser_get_divisor(port, baud);
-	if(sp->capabilities & UART_USE_FIFO) {
-		if(baud < 2400) {
+	if (sp->capabilities & UART_USE_FIFO) {
+		if (baud < 2400) {
 			fcr = UART_FCR_ENABLE_FIFO | UART_FCR_TRIGGER_1;
 		} else {
 			fcr = UART_FCR_ENABLE_FIFO | UART_FCR_TRIGGER_14;
@@ -2714,7 +2642,7 @@ wch_ser_set_termios(
 	}
 
 	/* added on 20210323 */
-	if(baud > sp->port.baud_base) {
+	if (baud > sp->port.baud_base) {
 		sp->ier |= 1 << 5;
 	} else {
 		sp->ier &= ~(1 << 5);
@@ -2722,7 +2650,7 @@ wch_ser_set_termios(
 
 	sp->mcr &= ~UART_MCR_AFE;
 
-	if(termios->c_cflag & CRTSCTS) {
+	if (termios->c_cflag & CRTSCTS) {
 		sp->mcr |= UART_MCR_AFE;
 		sp->mcr |= UART_MCR_RTS;
 	}
@@ -2737,34 +2665,34 @@ wch_ser_set_termios(
 
 	sp->port.read_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
 
-	if(termios->c_iflag & INPCK) {
+	if (termios->c_iflag & INPCK) {
 		sp->port.read_status_mask |= UART_LSR_FE | UART_LSR_PE;
 	}
 
-	if(termios->c_iflag & (BRKINT | PARMRK)) {
+	if (termios->c_iflag & (BRKINT | PARMRK)) {
 		sp->port.read_status_mask |= UART_LSR_BI;
 	}
 
 	sp->port.ignore_status_mask = 0;
 
-	if(termios->c_iflag & IGNPAR) {
+	if (termios->c_iflag & IGNPAR) {
 		sp->port.ignore_status_mask |= UART_LSR_PE | UART_LSR_FE;
 	}
 
-	if(termios->c_iflag & IGNBRK) {
+	if (termios->c_iflag & IGNBRK) {
 		sp->port.ignore_status_mask |= UART_LSR_BI;
 
-		if(termios->c_iflag & IGNPAR) {
+		if (termios->c_iflag & IGNPAR) {
 			sp->port.ignore_status_mask |= UART_LSR_OE;
 		}
 	}
 
-	if((termios->c_cflag & CREAD) == 0) {
+	if ((termios->c_cflag & CREAD) == 0) {
 		sp->port.ignore_status_mask |= UART_LSR_DR;
 	}
 
 	sp->ier &= ~UART_IER_MSI;
-	if(WCH_ENABLE_MS(&sp->port, termios->c_cflag)) {
+	if (WCH_ENABLE_MS(&sp->port, termios->c_cflag)) {
 		sp->ier |= UART_IER_MSI;
 	}
 
@@ -2786,8 +2714,6 @@ wch_ser_set_termios(
 	spin_unlock_irqrestore(&sp->port.lock, flags);
 }
 
-
-
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 static void wch_ser_timeout(unsigned long data)
 {
@@ -2801,7 +2727,7 @@ static void wch_ser_timeout(struct timer_list *t)
 	unsigned int iir;
 	iir = READ_UART_IIR(sp);
 
-	if(!(iir & UART_IIR_NO_INT)) {
+	if (!(iir & UART_IIR_NO_INT)) {
 		spin_lock(&sp->port.lock);
 		ser_handle_port(sp, iir);
 		spin_unlock(&sp->port.lock);
@@ -2812,7 +2738,6 @@ static void wch_ser_timeout(struct timer_list *t)
 
 	mod_timer(&sp->timer, jiffies + timeout);
 }
-
 
 static _INLINE_ void
 ser_receive_chars(
@@ -2831,47 +2756,47 @@ ser_receive_chars(
 		flag = TTY_NORMAL;
 		sp->port.icount.rx++;
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,4,18))
-		if(unlikely(lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE)))
+		if (unlikely(lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE)))
 #else
-		if(lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE))
+		if (lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE))
 #endif
 		{
-			if(lsr & UART_LSR_BI) {
+			if (lsr & UART_LSR_BI) {
 				lsr &= ~(UART_LSR_FE | UART_LSR_PE);
 				sp->port.icount.brk++;
 
-				if(ser_handle_break(&sp->port)) {
+				if (ser_handle_break(&sp->port)) {
 					goto ignore_char;
 				}
-			} else if(lsr & UART_LSR_PE) {
+			} else if (lsr & UART_LSR_PE) {
 				sp->port.icount.parity++;
-			} else if(lsr & UART_LSR_FE) {
+			} else if (lsr & UART_LSR_FE) {
 				sp->port.icount.frame++;
 			}
 
-			if(lsr & UART_LSR_OE) {
+			if (lsr & UART_LSR_OE) {
 				sp->port.icount.overrun++;
 			}
 
 			lsr &= sp->port.read_status_mask;
 
 
-			if(lsr & UART_LSR_BI) {
+			if (lsr & UART_LSR_BI) {
 				flag = TTY_BREAK;
-			} else if(lsr & UART_LSR_PE) {
+			} else if (lsr & UART_LSR_PE) {
 				flag = TTY_PARITY;
-			} else if(lsr & UART_LSR_FE) {
+			} else if (lsr & UART_LSR_FE) {
 				flag = TTY_FRAME;
 			}
 		}
 
 
-		if((I_IXOFF(tty)) || I_IXON(tty)) {
-			if(ch == START_CHAR(tty)) {
+		if ((I_IXOFF(tty)) || I_IXON(tty)) {
+			if (ch == START_CHAR(tty)) {
 				tty->stopped = 0;
 				wch_ser_start_tx(&sp->port, 1);
 				goto ignore_char;
-			} else if(ch == STOP_CHAR(tty)) {
+			} else if (ch == STOP_CHAR(tty)) {
 				tty->stopped = 1;
 				wch_ser_stop_tx(&sp->port, 1);
 				goto ignore_char;
@@ -2883,11 +2808,11 @@ ser_receive_chars(
 ignore_char:
 		lsr = READ_UART_LSR(sp);
 
-		if(lsr == 0xff) {
+		if (lsr == 0xff) {
 			lsr = 0x01;
 		}
 
-	} while(lsr & (UART_LSR_DR | UART_LSR_BI) && (max_count-- > 0));
+	} while (lsr & (UART_LSR_DR | UART_LSR_BI) && (max_count-- > 0));
 
 	spin_unlock(&sp->port.lock);
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
@@ -2899,7 +2824,6 @@ ignore_char:
 	*status = lsr;
 }
 
-
 static _INLINE_ void
 ser_transmit_chars(
     struct wch_ser_port *sp
@@ -2908,26 +2832,26 @@ ser_transmit_chars(
 	struct circ_buf *xmit = &sp->port.info->xmit;
 	int count;
 
-	if((!sp) || (!sp->port.iobase)) {
+	if ((!sp) || (!sp->port.iobase)) {
 		return;
 	}
 
-	if(!sp->port.info) {
+	if (!sp->port.info) {
 		return;
 	}
 
-	if(!xmit) {
+	if (!xmit) {
 		return;
 	}
 
-	if(sp->port.x_char) {
+	if (sp->port.x_char) {
 		WRITE_UART_TX(sp, sp->port.x_char);
 		sp->port.icount.tx++;
 		sp->port.x_char = 0;
 		return;
 	}
 
-	if(ser_circ_empty(xmit) || ser_tx_stopped(&sp->port)) {
+	if (ser_circ_empty(xmit) || ser_tx_stopped(&sp->port)) {
 		wch_ser_stop_tx(&sp->port, 0);
 		return;
 	}
@@ -2939,13 +2863,13 @@ ser_transmit_chars(
 		xmit->tail = (xmit->tail + 1) & (WCH_UART_XMIT_SIZE - 1);
 		sp->port.icount.tx++;
 
-		if(ser_circ_empty(xmit)) {
+		if (ser_circ_empty(xmit)) {
 			break;
 		}
 
-	} while(--count > 0);
+	} while (--count > 0);
 
-	if(ser_circ_chars_pending(xmit) < WAKEUP_CHARS) {
+	if (ser_circ_chars_pending(xmit) < WAKEUP_CHARS) {
 		ser_write_wakeup(&sp->port);
 	}
 	/*
@@ -2956,40 +2880,38 @@ ser_transmit_chars(
 	*/
 }
 
-
 static _INLINE_ void
 ser_check_modem_status(
     struct wch_ser_port *sp,
     unsigned char status
 )
 {
-	if((status & UART_MSR_ANY_DELTA) == 0) {
+	if ((status & UART_MSR_ANY_DELTA) == 0) {
 		return;
 	}
 
-	if(!sp->port.info) {
+	if (!sp->port.info) {
 		return;
 	}
 
-	if(status & UART_MSR_TERI) {
+	if (status & UART_MSR_TERI) {
 		sp->port.icount.rng++;
 	}
 
-	if(status & UART_MSR_DDSR) {
+	if (status & UART_MSR_DDSR) {
 		sp->port.icount.dsr++;
 	}
 
-	if(status & UART_MSR_DDCD) {
+	if (status & UART_MSR_DDCD) {
 		ser_handle_dcd_change(&sp->port, status & UART_MSR_DCD);
 	}
 
-	if(status & UART_MSR_DCTS) {
+	if (status & UART_MSR_DCTS) {
 		ser_handle_cts_change(&sp->port, status & UART_MSR_CTS);
 	}
 
 	wake_up_interruptible(&sp->port.info->delta_msr_wait);
 }
-
 
 static _INLINE_ void
 ser_handle_port(
@@ -3000,25 +2922,24 @@ ser_handle_port(
 	unsigned char lsr = READ_UART_LSR(sp);
 	unsigned char msr = 0;
 
-	if(lsr == 0xff) {
+	if (lsr == 0xff) {
 		lsr = 0x01;
 	}
 
-	if((iir == UART_IIR_RLSI) || (iir == UART_IIR_CTO) || (iir == UART_IIR_RDI)) {
+	if ((iir == UART_IIR_RLSI) || (iir == UART_IIR_CTO) || (iir == UART_IIR_RDI)) {
 		ser_receive_chars(sp, &lsr);
 	}
 
-	if((iir == UART_IIR_THRI) && (lsr & UART_LSR_THRE)) {
+	if ((iir == UART_IIR_THRI) && (lsr & UART_LSR_THRE)) {
 		ser_transmit_chars(sp);
 	}
 
 	msr = READ_UART_MSR(sp);
 
-	if(msr & UART_MSR_ANY_DELTA) {
+	if (msr & UART_MSR_ANY_DELTA) {
 		ser_check_modem_status(sp, msr);
 	}
 }
-
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 static struct tty_operations wch_tty_ops = {
@@ -3062,7 +2983,7 @@ wch_ser_register_driver(
 	drv->state = kmalloc(sizeof(struct ser_state) * drv->nr, GFP_KERNEL);
 	ret = -ENOMEM;
 
-	if(!drv->state) {
+	if (!drv->state) {
 		printk("WCH Error: Allocate memory fail !\n\n");
 		goto out;
 	}
@@ -3074,7 +2995,7 @@ wch_ser_register_driver(
 #else
 	normal = &drv->tty_driver;
 #endif
-	if(!normal) {
+	if (!normal) {
 		printk("WCH Error: Allocate tty driver fail !\n\n");
 		goto out;
 	}
@@ -3124,9 +3045,9 @@ wch_ser_register_driver(
 	normal->wait_until_sent = ser_wait_until_sent;
 #endif
 
-	for(i = 0; i < drv->nr; i++) {
+	for (i = 0; i < drv->nr; i++) {
 		struct ser_state *state = drv->state + i;
-		if(!state) {
+		if (!state) {
 			ret = -1;
 			printk("WCH Error: Memory error !\n\n");
 			goto out;
@@ -3150,13 +3071,13 @@ wch_ser_register_driver(
 	kref_init(&normal->kref);
 #endif
 	ret = tty_register_driver(normal);
-	if(ret < 0) {
+	if (ret < 0) {
 		printk("WCH Error: Register tty driver fail !\n\n");
 		goto out;
 	}
 
 out:
-	if(ret < 0) {
+	if (ret < 0) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 		put_tty_driver(normal);
 #endif
@@ -3165,7 +3086,6 @@ out:
 
 	return (ret);
 }
-
 
 extern void
 wch_ser_unregister_driver(
@@ -3179,7 +3099,7 @@ wch_ser_unregister_driver(
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
 	normal = drv->tty_driver;
-	if(!normal) {
+	if (!normal) {
 		return;
 	}
 
@@ -3189,17 +3109,16 @@ wch_ser_unregister_driver(
 
 #else
 	normal = &drv->tty_driver;
-	if(!normal) {
+	if (!normal) {
 		return;
 	}
 
 	tty_unregister_driver(normal);
 #endif
-	if(drv->state) {
+	if (drv->state) {
 		kfree(drv->state);
 	}
 }
-
 
 static void
 wch_ser_request_io(
@@ -3207,7 +3126,7 @@ wch_ser_request_io(
 )
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
-	switch(sp->port.iotype) {
+	switch (sp->port.iotype) {
 	case WCH_UPIO_PORT:
 		request_region(sp->port.iobase, WCH_SER_ADDRESS_LENGTH, "wch_ser");
 		break;
@@ -3218,7 +3137,6 @@ wch_ser_request_io(
 	}
 }
 
-
 static void
 wch_ser_configure_port(
     struct ser_driver *drv,
@@ -3227,13 +3145,13 @@ wch_ser_configure_port(
 )
 {
 	unsigned long flags;
-	if(!port->iobase) {
+	if (!port->iobase) {
 		return;
 	}
 
 	flags = WCH_UART_CONFIG_TYPE;
 
-	if(port->type != PORT_UNKNOWN) {
+	if (port->type != PORT_UNKNOWN) {
 		wch_ser_request_io(port);
 
 		spin_lock_irqsave(&port->lock, flags);
@@ -3242,7 +3160,6 @@ wch_ser_configure_port(
 		spin_unlock_irqrestore(&port->lock, flags);
 	}
 }
-
 
 static int
 wch_ser_add_one_port(
@@ -3254,7 +3171,7 @@ wch_ser_add_one_port(
 
 	int ret = 0;
 
-	if(port->line >= drv->nr) {
+	if (port->line >= drv->nr) {
 		return -EINVAL;
 	}
 
@@ -3262,7 +3179,7 @@ wch_ser_add_one_port(
 
 	down(&ser_port_sem);
 
-	if(state->port) {
+	if (state->port) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -3281,7 +3198,6 @@ out:
 	return ret;
 }
 
-
 extern int
 wch_ser_register_ports(
     struct ser_driver *drv
@@ -3293,16 +3209,16 @@ wch_ser_register_ports(
 #if WCH_DBG
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
 #endif
-	for(i = 0; i < wch_ser_port_total_cnt; i++) {
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
 		struct wch_ser_port *sp = &wch_ser_table[i];
 
-		if(!sp) {
+		if (!sp) {
 			return -1;
 		}
 
 		sp->port.line = i;
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 0))
-		if(sp->port.iobase)
+		if (sp->port.iobase)
 #endif
 		{
 
@@ -3318,7 +3234,7 @@ wch_ser_register_ports(
 
 			ret = wch_ser_add_one_port(drv, &sp->port);
 
-			if(ret != 0) {
+			if (ret != 0) {
 				return ret;
 			}
 		}
@@ -3329,7 +3245,6 @@ wch_ser_register_ports(
 	return 0;
 }
 
-
 static void
 wch_ser_release_io(
     struct ser_port *port
@@ -3337,7 +3252,7 @@ wch_ser_release_io(
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
 
-	switch(sp->port.iotype) {
+	switch (sp->port.iotype) {
 	case WCH_UPIO_PORT:
 		release_region(sp->port.iobase, WCH_SER_ADDRESS_LENGTH);
 		break;
@@ -3348,7 +3263,6 @@ wch_ser_release_io(
 	}
 }
 
-
 static void
 wch_ser_unconfigure_port(
     struct ser_driver *drv,
@@ -3357,7 +3271,7 @@ wch_ser_unconfigure_port(
 {
 	struct ser_port *port = state->port;
 	struct ser_info *info = state->info;
-	if(info && info->tty) {
+	if (info && info->tty) {
 		tty_hangup(info->tty);
 	}
 
@@ -3365,20 +3279,19 @@ wch_ser_unconfigure_port(
 
 	state->info = NULL;
 
-	if(port->type != PORT_UNKNOWN) {
+	if (port->type != PORT_UNKNOWN) {
 		wch_ser_release_io(port);
 	}
 
 	port->type = PORT_UNKNOWN;
 
-	if(info) {
+	if (info) {
 		tasklet_kill(&info->tlet);
 		kfree(info);
 	}
 
 	up(&state->sem);
 }
-
 
 static int
 wch_ser_remove_one_port(
@@ -3388,7 +3301,7 @@ wch_ser_remove_one_port(
 {
 	struct ser_state *state = drv->state + port->line;
 
-	if(state->port != port) {
+	if (state->port != port) {
 		printk("WCH Info : Removing wrong port: %p != %p\n\n", state->port, port);
 	}
 
@@ -3404,9 +3317,7 @@ wch_ser_remove_one_port(
 	return 0;
 }
 
-
-extern
-void
+extern void
 wch_ser_unregister_ports(
     struct ser_driver *drv
 )
@@ -3417,17 +3328,16 @@ wch_ser_unregister_ports(
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
 #endif
 
-	for(i = 0; i < wch_ser_port_total_cnt; i++) {
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
 		struct wch_ser_port *sp = &wch_ser_table[i];
 
-		if(sp->port.iobase) {
+		if (sp->port.iobase) {
 			wch_ser_remove_one_port(drv, &sp->port);
 		}
 	}
 }
 
-extern
-int
+extern int
 wch_ser_interrupt(
     struct wch_board *sb,
     struct wch_ser_port *first_sp
@@ -3444,18 +3354,18 @@ wch_ser_interrupt(
 
 	max = sb->ser_ports;
 
-	if((first_sp->port.port_flag & PORTFLAG_REMAP) == PORTFLAG_REMAP) { // CH352_2S CH352_1S1P
-		while(1) {
-			for(i = 0; i < max; i++) {
+	if ((first_sp->port.port_flag & PORTFLAG_REMAP) == PORTFLAG_REMAP) { // CH352_2S CH352_1S1P
+		while (1) {
+			for (i = 0; i < max; i++) {
 				sp = first_sp + i;
 
-				if(!sp->port.iobase) {
+				if (!sp->port.iobase) {
 					continue;
 				}
 
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3464,22 +3374,22 @@ wch_ser_interrupt(
 				}
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
-	} else if((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH353_4S)) { // CH353_4S
-		while(1) {
+	} else if ((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH353_4S)) { // CH353_4S
+		while (1) {
 			irqbits = READ_INTERRUPT_VECTOR_BYTE(first_sp) & first_sp->port.vector_mask;
-			if(irqbits == 0x0000) {
+			if (irqbits == 0x0000) {
 				break;
 			}
 
-			for(i = 0, bits = 1; i < max; i++, bits <<= 1) {
-				if(i == 0x02) {
+			for (i = 0, bits = 1; i < max; i++, bits <<= 1) {
+				if (i == 0x02) {
 					bits <<= 2;
 				}
-				if(!(bits & irqbits)) {
+				if (!(bits & irqbits)) {
 					continue;
 				}
 
@@ -3487,7 +3397,7 @@ wch_ser_interrupt(
 
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3496,19 +3406,19 @@ wch_ser_interrupt(
 				}
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
-	} else if((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH359_16S)) { // CH359_16S
-		while(1) {
+	} else if ((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH359_16S)) { // CH359_16S
+		while (1) {
 			irqbits = READ_INTERRUPT_VECTOR_WORD(first_sp) & first_sp->port.vector_mask;
-			if(irqbits == 0x0000) {
+			if (irqbits == 0x0000) {
 				break;
 			}
 
-			for(i = 0, bits = 1; i < max; i++, bits <<= 1) {
-				if(!(bits & irqbits)) {
+			for (i = 0, bits = 1; i < max; i++, bits <<= 1) {
+				if (!(bits & irqbits)) {
 					continue;
 				}
 
@@ -3516,7 +3426,7 @@ wch_ser_interrupt(
 
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3525,35 +3435,35 @@ wch_ser_interrupt(
 				}
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
-	} else if((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCIE && first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) ||
-	          (first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCIE && first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_8S)) { // CH384_8S CH384_28S
-		while(1) {
+	} else if ((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCIE && first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) ||
+	           (first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCIE && first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_8S)) { // CH384_8S CH384_28S
+		while (1) {
 			irqbits = READ_INTERRUPT_VECTOR_DWORD(first_sp) & first_sp->port.vector_mask;
 
-			if((irqbits & 0x80000000) != 0 &&
-			   (irqbits & 0x40000000) != 0 &&
-			   (irqbits & 0x20000000) != 0 &&
-			   (irqbits & 0x00000100) == 0 &&
-			   (irqbits & 0x00000200) == 0 &&
-			   (irqbits & 0x00000400) == 0 &&
-			   (irqbits & 0x00000800) == 0) {
+			if ((irqbits & 0x80000000) != 0 &&
+			    (irqbits & 0x40000000) != 0 &&
+			    (irqbits & 0x20000000) != 0 &&
+			    (irqbits & 0x00000100) == 0 &&
+			    (irqbits & 0x00000200) == 0 &&
+			    (irqbits & 0x00000400) == 0 &&
+			    (irqbits & 0x00000800) == 0) {
 				break;
 			}
 
 			/* handle CH438 #3 */
-			if((irqbits & 0x80000000) == 0) {
+			if ((irqbits & 0x80000000) == 0) {
 				sp = first_sp + 0x14;
 				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if(ch438irqbits != 0) {
-					for(i = 0; i < 0x08; i++) {
-						if(ch438irqbits & (1 << i)) {
+				if (ch438irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
-							if(iir & UART_IIR_NO_INT) {
+							if (iir & UART_IIR_NO_INT) {
 								continue;
 							} else {
 								spin_lock(&sp->port.lock);
@@ -3565,15 +3475,15 @@ wch_ser_interrupt(
 				}
 			}
 			/* handle CH438 #2 */
-			if((irqbits & 0x40000000) == 0) {
+			if ((irqbits & 0x40000000) == 0) {
 				sp = first_sp + 0x0C;
 				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if(ch438irqbits != 0) {
-					for(i = 0; i < 0x08; i++) {
-						if(ch438irqbits & (1 << i)) {
+				if (ch438irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
-							if(iir & UART_IIR_NO_INT) {
+							if (iir & UART_IIR_NO_INT) {
 								continue;
 							} else {
 								spin_lock(&sp->port.lock);
@@ -3585,21 +3495,21 @@ wch_ser_interrupt(
 				}
 			}
 			/* handle CH438 #1 */
-			if((irqbits & 0x20000000) == 0) {
+			if ((irqbits & 0x20000000) == 0) {
 				/* CH384_28S */
-				if(first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) {
+				if (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH384_28S) {
 					sp = first_sp + 0x04;
 				} else {
 					/* CH384_8S */
 					sp = first_sp;
 				}
 				ch438irqbits = READ_INTERRUPT_VECTOR_BYTE(sp) & sp->port.vector_mask;
-				if(ch438irqbits != 0) {
-					for(i = 0; i < 0x08; i++) {
-						if(ch438irqbits & (1 << i)) {
+				if (ch438irqbits != 0) {
+					for (i = 0; i < 0x08; i++) {
+						if (ch438irqbits & (1 << i)) {
 							sp += i;
 							iir = READ_UART_IIR(sp) & 0x0f;
-							if(iir & UART_IIR_NO_INT) {
+							if (iir & UART_IIR_NO_INT) {
 								continue;
 							} else {
 								spin_lock(&sp->port.lock);
@@ -3610,11 +3520,11 @@ wch_ser_interrupt(
 					}
 				}
 			}
-			if((irqbits & 0x00000100) == 0x00000100) {
+			if ((irqbits & 0x00000100) == 0x00000100) {
 				sp = first_sp;
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3622,11 +3532,11 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 			}
-			if((irqbits & 0x00000200) == 0x00000200) {
+			if ((irqbits & 0x00000200) == 0x00000200) {
 				sp = first_sp + 0x01;
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3634,11 +3544,11 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 			}
-			if((irqbits & 0x00000400) == 0x00000400) {
+			if ((irqbits & 0x00000400) == 0x00000400) {
 				sp = first_sp + 0x02;
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3646,11 +3556,11 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 			}
-			if((irqbits & 0x00000800) == 0x00000800) {
+			if ((irqbits & 0x00000800) == 0x00000800) {
 				sp = first_sp + 0x03;
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3659,29 +3569,29 @@ wch_ser_interrupt(
 				}
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
-	} else if((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH365_32S)) {
-		while(1) {
-			if((inb(first_sp->port.chip_iobase + 0xF8) & 0x04) != 0x04) {
+	} else if ((first_sp->port.pb_info.vendor_id == VENDOR_ID_WCH_PCI) && (first_sp->port.pb_info.device_id == DEVICE_ID_WCH_CH365_32S)) {
+		while (1) {
+			if ((inb(first_sp->port.chip_iobase + 0xF8) & 0x04) != 0x04) {
 				break;
 			}
 
 			irqbits = inb(first_sp->port.chip_iobase) & first_sp->port.vector_mask;
-			if(irqbits == 0xFF) {
+			if (irqbits == 0xFF) {
 				break;
 			}
 
-			if((irqbits & 0x00000010) == 0) { // first ch438 irq
-				for(i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
+			if ((irqbits & 0x00000010) == 0) { // first ch438 irq
+				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
 					sp = first_sp + i;
 					ch438irqbits = readb(sp->port.board_membase + 0x100 + 0x4F) & sp->port.vector_mask;
-					if(ch438irqbits == 0x00000000) {
+					if (ch438irqbits == 0x00000000) {
 						break;
 					}
-					if(!(bits & ch438irqbits)) {
+					if (!(bits & ch438irqbits)) {
 						continue;
 					} else {
 						break;
@@ -3690,7 +3600,7 @@ wch_ser_interrupt(
 
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3698,14 +3608,14 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 				outb(inb(sp->port.chip_iobase + 0xF8) & 0xFB, sp->port.chip_iobase + 0xF8);
-			} else if((irqbits & 0x00000020) == 0) {
-				for(i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
+			} else if ((irqbits & 0x00000020) == 0) {
+				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
 					sp = first_sp + i + 0x08;
 					ch438irqbits = readb(sp->port.board_membase + 0x180 + 0x4F) & sp->port.vector_mask;
-					if(ch438irqbits == 0x00000000) {
+					if (ch438irqbits == 0x00000000) {
 						break;
 					}
-					if(!(bits & ch438irqbits)) {
+					if (!(bits & ch438irqbits)) {
 						continue;
 					} else {
 						break;
@@ -3713,7 +3623,7 @@ wch_ser_interrupt(
 				}
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3721,14 +3631,14 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 				outb(inb(sp->port.chip_iobase + 0xF8) & 0xFB, sp->port.chip_iobase + 0xF8);
-			} else if((irqbits & 0x00000040) == 0) {
-				for(i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
+			} else if ((irqbits & 0x00000040) == 0) {
+				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
 					sp = first_sp + i + 0x10;
 					ch438irqbits = readb(sp->port.board_membase + 0x200 + 0x4F) & sp->port.vector_mask;
-					if(ch438irqbits == 0x00000000) {
+					if (ch438irqbits == 0x00000000) {
 						break;
 					}
-					if(!(bits & ch438irqbits)) {
+					if (!(bits & ch438irqbits)) {
 						continue;
 					} else {
 						break;
@@ -3736,7 +3646,7 @@ wch_ser_interrupt(
 				}
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3744,14 +3654,14 @@ wch_ser_interrupt(
 					spin_unlock(&sp->port.lock);
 				}
 				outb(inb(sp->port.chip_iobase + 0xF8) & 0xFB, sp->port.chip_iobase + 0xF8);
-			} else if((irqbits & 0x00000080) == 0) {
-				for(i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
+			} else if ((irqbits & 0x00000080) == 0) {
+				for (i = 0, bits = 1; i < 0x08; i++, bits <<= 1) {
 					sp = first_sp + i + 0x18;
 					ch438irqbits = readb(sp->port.board_membase + 0x280 + 0x4F) & sp->port.vector_mask;
-					if(ch438irqbits == 0x00000000) {
+					if (ch438irqbits == 0x00000000) {
 						break;
 					}
-					if(!(bits & ch438irqbits)) {
+					if (!(bits & ch438irqbits)) {
 						continue;
 					} else {
 						break;
@@ -3759,7 +3669,7 @@ wch_ser_interrupt(
 				}
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3771,19 +3681,19 @@ wch_ser_interrupt(
 				break;
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
 	} else { // CH353_2S1P CH353_2S1PAR CH355_4S CH356_4S1P CH356_8S CH358_4S1P CH358_8S CH382_2S1P CH384_4S1P
-		while(1) {
+		while (1) {
 			irqbits = READ_INTERRUPT_VECTOR_BYTE(first_sp) & first_sp->port.vector_mask;
-			if(irqbits == 0x0000) {
+			if (irqbits == 0x0000) {
 				break;
 			}
 
-			for(i = 0, bits = 1; i < max; i++, bits <<= 1) {
-				if(!(bits & irqbits)) {
+			for (i = 0, bits = 1; i < max; i++, bits <<= 1) {
+				if (!(bits & irqbits)) {
 					continue;
 				}
 
@@ -3791,7 +3701,7 @@ wch_ser_interrupt(
 
 				iir = READ_UART_IIR(sp) & 0x0f;
 
-				if(iir & UART_IIR_NO_INT) {
+				if (iir & UART_IIR_NO_INT) {
 					continue;
 				} else {
 					spin_lock(&sp->port.lock);
@@ -3800,7 +3710,7 @@ wch_ser_interrupt(
 				}
 			}
 
-			if(pass_counter++ > INTERRUPT_COUNT) {
+			if (pass_counter++ > INTERRUPT_COUNT) {
 				break;
 			}
 		}
