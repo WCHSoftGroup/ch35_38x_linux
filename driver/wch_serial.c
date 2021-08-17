@@ -91,7 +91,7 @@ static int ser_ioctl(struct tty_struct *, unsigned int, unsigned long);
 static int ser_ioctl(struct tty_struct *, struct file *, unsigned int, unsigned long);
 #endif
 static void ser_hangup(struct tty_struct *);
-unsigned int ser_get_divisor(struct ser_port *, unsigned int);
+unsigned int ser_get_divisor(struct ser_port *, unsigned int, bool);
 unsigned int ser_get_baud_rate(struct ser_port *, struct WCHTERMIOS *, struct WCHTERMIOS *, unsigned int, unsigned int);
 static void ser_change_speed(struct ser_state *, struct WCHTERMIOS *);
 static void ser_set_termios(struct tty_struct *, struct WCHTERMIOS *);
@@ -114,7 +114,7 @@ static void wch_ser_enable_ms(struct ser_port *);
 static void wch_ser_break_ctl(struct ser_port *, int);
 static int wch_ser_startup(struct ser_port *);
 static void wch_ser_shutdown(struct ser_port *);
-static unsigned int wch_ser_get_divisor(struct ser_port *, unsigned int);
+static unsigned int wch_ser_get_divisor(struct ser_port *, unsigned int, bool);
 static void wch_ser_set_termios(struct ser_port *, struct WCHTERMIOS *, struct WCHTERMIOS *);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 static void wch_ser_timeout(unsigned long);
@@ -123,7 +123,7 @@ static void wch_ser_timeout(struct timer_list *);
 #endif
 
 
-static _INLINE_ void ser_receive_chars(struct wch_ser_port *, unsigned char *);
+static _INLINE_ void ser_receive_chars(struct wch_ser_port *, unsigned char *, unsigned char);
 static _INLINE_ void ser_transmit_chars(struct wch_ser_port *);
 static _INLINE_ void ser_check_modem_status(struct wch_ser_port *, unsigned char);
 static _INLINE_ void ser_handle_port(struct wch_ser_port *, unsigned char);
@@ -227,6 +227,24 @@ READ_UART_RX(
 	}
 
 	return 0;
+}
+
+static
+unsigned char
+READ_UART_RX_BUFFER(
+	struct wch_ser_port *sp,
+	unsigned char *buf,
+	int count
+	)
+{
+    if (sp->port.iobase)
+    {
+		{
+			insb(sp->port.iobase + UART_RX, buf, count);
+		}
+    }
+
+    return 0;
 }
 
 static void
@@ -1104,6 +1122,7 @@ ser_write(
 	unsigned long flags;
 	int c;
 	int ret = 0;
+
 	if (!state || !state->info) {
 		return -EL3HLT;
 	}
@@ -1728,7 +1747,8 @@ ser_hangup(
 unsigned int
 ser_get_divisor(
     struct ser_port *port,
-    unsigned int baud
+    unsigned int baud,
+    bool btwicefreq
 )
 {
 	unsigned int quot;
@@ -1736,10 +1756,17 @@ ser_get_divisor(
 	if (baud == 38400 && (port->flags & WCH_UPF_SPD_MASK) == WCH_UPF_SPD_CUST) {
 		quot = port->custom_divisor;
 	} else {
-		if (baud > port->baud_base)
-			quot = port->uartclk * 24 / 16 / baud;
-		else
-			quot = port->uartclk / 16 / baud;
+		if (btwicefreq) {
+			if (10 * port->uartclk / 16 / baud % 10 >= 5)
+				quot = port->uartclk / 16 / baud + 1;
+			else
+				quot = port->uartclk / 16 / baud;
+		} else {
+			if (10 * port->uartclk / 24 / 16 / baud % 10 >= 5)
+				quot = port->uartclk / 24 / 16 / baud + 1;
+			else
+				quot = port->uartclk / 24 / 16 / baud;
+		}
 	}
 
 	return quot;
@@ -2564,7 +2591,8 @@ wch_ser_shutdown(
 static unsigned int
 wch_ser_get_divisor(
     struct ser_port *port,
-    unsigned int baud
+    unsigned int baud,
+    bool btwicefreq
 )
 {
 	unsigned int quot;
@@ -2574,8 +2602,9 @@ wch_ser_get_divisor(
 	} else if ((port->flags & WCH_UPF_MAGIC_MULTIPLIER) && baud == (port->uartclk / 8)) {
 		quot = 0x8002;
 	} else {
-		quot = ser_get_divisor(port, baud);
+		quot = ser_get_divisor(port, baud, btwicefreq);
 	}
+
 	return quot;
 }
 
@@ -2592,6 +2621,7 @@ wch_ser_set_termios(
 	unsigned long flags;
 	unsigned int baud;
 	unsigned int quot;
+
 	switch (termios->c_cflag & CSIZE) {
 	case CS5:
 		cval = 0x00;
@@ -2629,23 +2659,23 @@ wch_ser_set_termios(
 	}
 #endif
 
-	/* uartclk is 1/12 cystal freq by default, so max = uartclk * 24 / 16 */
-	baud = ser_get_baud_rate(port, termios, old, 0, port->uartclk * 24 / 16);
+	/* fixed on 20210706 */
+	if (port->bext1stport == false) {
+		baud = ser_get_baud_rate(port, termios, old, port->uartclk / 16 / 65536, port->uartclk / 16);
+		quot = wch_ser_get_divisor(port, baud, true);
+		sp->ier |= 1 << 5;
+	} else {
+		baud = ser_get_baud_rate(port, termios, old, port->uartclk / 24 / 16 / 65536, port->uartclk / 24 / 16);
+		quot = wch_ser_get_divisor(port, baud, false);
+		sp->ier &= ~(1 << 5);
+	}
 
-	quot = wch_ser_get_divisor(port, baud);
 	if (sp->capabilities & UART_USE_FIFO) {
 		if (baud < 2400) {
 			fcr = UART_FCR_ENABLE_FIFO | UART_FCR_TRIGGER_1;
 		} else {
 			fcr = UART_FCR_ENABLE_FIFO | UART_FCR_TRIGGER_14;
 		}
-	}
-
-	/* added on 20210323 */
-	if (baud > sp->port.baud_base) {
-		sp->ier |= 1 << 5;
-	} else {
-		sp->ier &= ~(1 << 5);
 	}
 
 	sp->mcr &= ~UART_MCR_AFE;
@@ -2742,19 +2772,33 @@ static void wch_ser_timeout(struct timer_list *t)
 static _INLINE_ void
 ser_receive_chars(
     struct wch_ser_port *sp,
-    unsigned char *status
+    unsigned char *status,
+    unsigned char iir
 )
 {
 	struct tty_struct *tty = sp->port.info->tty;
-	unsigned char ch;
+	unsigned char ch = 0;
 	int max_count = 256;
 	unsigned char lsr = *status;
-	char flag;
+	unsigned char flag;
+
+	unsigned char rbuf[256];
+	int readcont = 0;
+	int count;
 
 	do {
-		ch = READ_UART_RX(sp);
+		if (iir == UART_IIR_RDI) {
+			READ_UART_RX_BUFFER(sp, rbuf, sp->port.rx_trigger);
+        	sp->port.icount.rx += sp->port.rx_trigger;
+			count = sp->port.rx_trigger;
+			readcont = 1;
+			iir = 0;
+		} else {
+			ch = READ_UART_RX(sp);
+			sp->port.icount.rx++;
+			readcont = 0;
+		}
 		flag = TTY_NORMAL;
-		sp->port.icount.rx++;
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,4,18))
 		if (unlikely(lsr & (UART_LSR_BI | UART_LSR_PE | UART_LSR_FE | UART_LSR_OE)))
 #else
@@ -2803,7 +2847,10 @@ ser_receive_chars(
 			}
 		}
 
-		ser_insert_char(&sp->port, lsr, UART_LSR_OE, ch, flag);
+		if (readcont)
+			ser_insert_buffer(&sp->port, lsr, UART_LSR_OE, rbuf, count, flag);
+		else
+			ser_insert_char(&sp->port, lsr, UART_LSR_OE, ch, flag);
 
 ignore_char:
 		lsr = READ_UART_LSR(sp);
@@ -2927,7 +2974,7 @@ ser_handle_port(
 	}
 
 	if ((iir == UART_IIR_RLSI) || (iir == UART_IIR_CTO) || (iir == UART_IIR_RDI)) {
-		ser_receive_chars(sp, &lsr);
+		ser_receive_chars(sp, &lsr, iir);
 	}
 
 	if ((iir == UART_IIR_THRI) && (lsr & UART_LSR_THRE)) {

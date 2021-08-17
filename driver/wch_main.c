@@ -15,10 +15,11 @@
  * V1.11 - fixed the issue of serial ports number creation
  * V1.12 - fixed modem signals support
  * V1.13 - added automatic frequency multiplication when using baud rates higher than 115200bps
- 		 - added mutex protect in uart send process
+ 		 - added mutex protection in uart transmit process
  * V1.14 - optimized the processing of serial ports in interruption
  * V1.15 - added support for non-standard baud rate
  * V1.16 - fixed uart clock frequency multiplication bugs
+ * V1.17 - modified uart data received process
  */
 
 #include "wch_common.h"
@@ -420,6 +421,18 @@ wch_assign_resource(
 				for (j = 0; j < sb->ser_ports; j++, ser_n++, sp++) {
 					sp->port.chip_flag = sb->pb_info.port[j].chip_flag;
 					sp->port.iobase = sb->bar_addr[sb->pb_info.port[j].bar1] + sb->pb_info.port[j].offset1;
+
+					/* use scr reg to test io space */
+					outb(0x55, sp->port.iobase + UART_SCR);
+					if (inb(sp->port.iobase + UART_SCR) != 0x55) {
+						status = -ENXIO;
+						if (j == 0)
+							printk("WCH Error: pci/pcie address error !\n");
+						else
+							printk("WCH Error: ch432/ch438 communication error !\n");
+						return status;
+					}
+
 					if ((sb->board_flag & BOARDFLAG_REMAP) == BOARDFLAG_REMAP) {
 						sp->port.vector = 0;
 					} else if ((sb->board_flag & BOARDFLAG_CH384_8_PORTS) == BOARDFLAG_CH384_8_PORTS) {
@@ -525,12 +538,23 @@ wch_ser_port_table_init(
 				sp->port.board_enum = sb->board_enum;
 				sp->port.bus_number = sb->bus_number;
 				sp->port.dev_number = sb->dev_number;
-				sp->port.baud_base = CRYSTAL_FREQ / 12 / 16;
+				sp->port.baud_base = CRYSTAL_FREQ * 2 / 16;
 				sp->port.pb_info = sb->pb_info;
+				if (sp->port.chip_flag == WCH_BOARD_CH384_8S) {
+					if (n == 0)
+						sp->port.bext1stport = true;
+					else
+						sp->port.bext1stport = false;
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_28S) {
+					if ((n == 4) || (n == 12) || (n == 20))
+						sp->port.bext1stport = true;
+					else
+						sp->port.bext1stport = false;
+				}
 
 				sp->port.irq = sb->irq;
 				sp->port.line = n;
-				sp->port.uartclk = CRYSTAL_FREQ / 12;
+				sp->port.uartclk = CRYSTAL_FREQ * 2;
 				if (ch365_32s) {
 					sp->port.iotype = WCH_UPIO_MEM;
 				} else {
@@ -630,7 +654,7 @@ wch_ser_port_table_init(
 #if WCH_DBG
 void wch_debug(
     void
-) // \B5\F7\CA\D4
+)
 {
 #if WCH_DBG_BOARD
 	struct wch_board *sb = NULL;
