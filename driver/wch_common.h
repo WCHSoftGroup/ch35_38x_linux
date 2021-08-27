@@ -105,8 +105,8 @@
 /*******************************************************
 WCH driver information
 *******************************************************/
-#define WCH_DRIVER_VERSION 		"1.16"
-#define WCH_DRIVER_DATE 		"2021/06/26"
+#define WCH_DRIVER_VERSION 		"1.17"
+#define WCH_DRIVER_DATE 		"2021/08/17"
 #define WCH_DRIVER_AUTHOR 		"WCH GROUP"
 #define WCH_DRIVER_DESC 		"WCH Multi-I/O Board Driver Module"
 
@@ -642,7 +642,7 @@ struct ser_port {
 	unsigned int type;
 	unsigned int custom_divisor;
 	unsigned int line;
-	struct device *dev;  //zh
+	struct device *dev;
 
 	int board_enum;
 	unsigned int bus_number;
@@ -655,6 +655,7 @@ struct ser_port {
 	unsigned int port_flag;
 	unsigned int baud_base;
 	int rx_trigger;
+	bool bext1stport;
 	unsigned char ldisc_stop_rx;
 
 	unsigned int setserial_flag;
@@ -708,6 +709,42 @@ ser_handle_dcd_change(
 }
 
 #include <linux/tty_flip.h>
+
+static inline void
+ser_insert_buffer(
+				struct ser_port *port,
+				unsigned int status,
+				unsigned int overrun,
+				unsigned char *buf,
+				unsigned int count,
+				unsigned char flag
+				)
+{
+
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(3, 8, 13))
+	struct tty_struct *tty = port->info->tty;
+
+	if ((status & port->ignore_status_mask & ~overrun) == 0) {
+		tty_insert_flip_string_flags(tty, buf, &flag, count);
+	}
+
+	if (status & ~port->ignore_status_mask & overrun) {
+		tty_insert_flip_char(tty, 0, TTY_OVERRUN);
+	}
+#else
+	struct tty_port *tty = &port->state->port0;
+
+	if ((status & port->ignore_status_mask & ~overrun) == 0) {
+		if (tty_insert_flip_string_flags(tty, buf, &flag, count) == 0)
+			++port->icount.buf_overrun;
+	}
+
+	if (status & ~port->ignore_status_mask & overrun) {
+		if (tty_insert_flip_char(tty, 0, TTY_OVERRUN) == 0)
+			++port->icount.buf_overrun;
+	}
+#endif
+}
 
 static inline void
 ser_insert_char(
