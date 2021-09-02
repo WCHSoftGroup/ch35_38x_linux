@@ -725,7 +725,7 @@ ser_insert_buffer(
 	struct tty_struct *tty = port->info->tty;
 
 	if ((status & port->ignore_status_mask & ~overrun) == 0) {
-		tty_insert_flip_string_flags(tty, buf, &flag, count);
+		tty_insert_flip_string_fixed_flag(tty, buf, flag, count);
 	}
 
 	if (status & ~port->ignore_status_mask & overrun) {
@@ -735,7 +735,7 @@ ser_insert_buffer(
 	struct tty_port *tty = &port->state->port0;
 
 	if ((status & port->ignore_status_mask & ~overrun) == 0) {
-		if (tty_insert_flip_string_flags(tty, buf, &flag, count) == 0)
+		if (tty_insert_flip_string_fixed_flag(tty, buf, flag, count) == 0)
 			++port->icount.buf_overrun;
 	}
 
