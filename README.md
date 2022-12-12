@@ -6,12 +6,8 @@ Description:
 	Also you can use this specific driver, the tty devices are named "ttyWCHx".  
 
 1. Open "Terminal"
-2. Switch to "driver" directory
-3. Compile the driver using "make", you will see the module "wch.ko" if successful
-4. Type "sudo make load" or "sudo insmod wch.ko" to load the driver dynamically
-5. Type "sudo make unload" or "sudo rmmod wch.ko" to unload the driver
-6. Type "sudo make install" to make the driver work permanently
-7. Type "sudo make uninstall" to remove the driver
+6. Type "sudo sh install.sh" to make the driver work permanently
+7. Type "sudo sh uninstall.sh" to remove the driver
 8. You can refer to the link below to acquire uart application, you can use gcc or Cross-compile with cross-gcc
    https://github.com/WCHSoftGroup/tty_uart
 
