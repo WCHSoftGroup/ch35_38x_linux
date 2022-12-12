@@ -1,9 +1,9 @@
-DRIVERNAME := wch
+DRIVERNAME := wch_pre
 all : modules
 
 ifneq ($(KERNELRELEASE),)
 obj-m += $(DRIVERNAME).o
-$(DRIVERNAME)-y := wch_devtable.o wch_serial.o wch_main.o
+$(DRIVERNAME)-y := wch_pre_main.o
 else
 KERNELDIR := /lib/modules/$(shell uname -r)/build
 PWD	:= $(shell pwd)
