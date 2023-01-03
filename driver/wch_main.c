@@ -1,7 +1,7 @@
 /*
  * PCI/PCIE to serial driver for ch351/352/353/355/356/357/358/359/382/384, etc.
  *
- * Copyright (C) 2022 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (C) 2023 Nanjing Qinheng Microelectronics Co., Ltd.
  * Web: http://wch.cn
  * Author: WCH <tech@wch.cn>
  *

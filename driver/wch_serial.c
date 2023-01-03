@@ -2040,6 +2040,8 @@ static int ser_open(struct tty_struct *tty, struct file *filp)
 #elif (LINUX_VERSION_CODE < KERNEL_VERSION(5, 12, 0))
         state->port->state = state;
         state->port0.low_latency = (state->port->flags & WCH_UPF_LOW_LATENCY) ? 1 : 0;
+#else
+        state->port->state = state;
 #endif
         tty->driver_data = state;
         state->info->tty = tty;
