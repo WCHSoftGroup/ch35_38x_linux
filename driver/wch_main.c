@@ -695,12 +695,12 @@ void wch_debug(void)
             printk(" board_number : %d\n", sb->board_number);
             printk(" irq          : %d\n", sb->irq);
             printk(" vector_mask  : 0x%x\n", sb->vector_mask);
-            printk(" bar[0]       : 0x%x\n", sb->bar_addr[0]);
-            printk(" bar[1]       : 0x%x\n", sb->bar_addr[1]);
-            printk(" bar[2]       : 0x%x\n", sb->bar_addr[2]);
-            printk(" bar[3]       : 0x%x\n", sb->bar_addr[3]);
-            printk(" bar[4]       : 0x%x\n", sb->bar_addr[4]);
-            printk(" bar[5]       : 0x%x\n", sb->bar_addr[5]);
+            printk(" bar[0]       : 0x%lx\n", sb->bar_addr[0]);
+            printk(" bar[1]       : 0x%lx\n", sb->bar_addr[1]);
+            printk(" bar[2]       : 0x%lx\n", sb->bar_addr[2]);
+            printk(" bar[3]       : 0x%lx\n", sb->bar_addr[3]);
+            printk(" bar[4]       : 0x%lx\n", sb->bar_addr[4]);
+            printk(" bar[5]       : 0x%lx\n", sb->bar_addr[5]);
             printk("----------------------------\n");
         }
     }
@@ -716,10 +716,10 @@ void wch_debug(void)
         if (sp->port.iobase) {
             printk(" number       : %d\n", j);
             printk(" name         : %s\n", sp->port.pb_info.board_name);
-            printk(" iobase       : 0x%x\n", sp->port.iobase);
+            printk(" iobase       : 0x%lx\n", sp->port.iobase);
             printk(" chip_iobase  : 0x%x\n", sp->port.chip_iobase);
             printk(" irq          : %d\n", sp->port.irq);
-            printk(" vector       : 0x%x\n", sp->port.vector);
+            printk(" vector       : 0x%lx\n", sp->port.vector);
             printk(" vector_mask  : 0x%x\n", sp->port.vector_mask);
             printk(" chip_flag    : 0x%x\n", sp->port.chip_flag);
             printk(" port_flag    : 0x%x\n", sp->port.port_flag);
@@ -790,7 +790,7 @@ int wch_register_irq(void)
     struct wch_board *sb = NULL;
     int status = 0;
     int i;
-    unsigned int chip_iobase;
+    unsigned long chip_iobase;
 
 #if WCH_DBG
     printk("%s : %s\n", __FILE__, __FUNCTION__);
@@ -861,7 +861,7 @@ void wch_release_irq(void)
 {
     struct wch_board *sb = NULL;
     int i;
-    unsigned int chip_iobase;
+    unsigned long chip_iobase;
 
 #if WCH_DBG
     printk("%s : %s\n", __FILE__, __FUNCTION__);

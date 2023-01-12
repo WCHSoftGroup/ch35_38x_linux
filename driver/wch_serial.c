@@ -1460,7 +1460,11 @@ static int ser_ioctl(struct tty_struct *tty, struct file *filp, unsigned int cmd
         kterm = tty->termios;
         mutex_unlock(&tty->throttle_mutex);
 
+#if IS_ENABLED(CONFIG_SW64)
+        if (copy_to_user((struct termios __user *)arg, &kterm, sizeof(struct termios)))
+#else
         if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+#endif
             ret = -EFAULT;
         else
             ret = 0;
@@ -1470,7 +1474,11 @@ static int ser_ioctl(struct tty_struct *tty, struct file *filp, unsigned int cmd
         kterm = tty->termios;
         mutex_unlock(&tty->termios_mutex);
 
+#if IS_ENABLED(CONFIG_SW64)
+        if (copy_to_user((struct termios __user *)arg, &kterm, sizeof(struct termios)))
+#else
         if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+#endif
             ret = -EFAULT;
         else
             ret = 0;
@@ -1480,7 +1488,11 @@ static int ser_ioctl(struct tty_struct *tty, struct file *filp, unsigned int cmd
         kterm = tty->termios;
         mutex_unlock(&tty->termios_mutex);
 
+#if IS_ENABLED(CONFIG_SW64)
+        if (copy_to_user((struct termios __user *)arg, kterm, sizeof(struct termios)))
+#else
         if (kernel_termios_to_user_termios_1((struct termios __user *)arg, kterm))
+#endif
             ret = -EFAULT;
         else
             ret = 0;
@@ -3025,7 +3037,7 @@ extern int wch_ser_register_ports(struct ser_driver *drv)
                 return ret;
             }
         }
-        printk("Setup ttyWCH%d - PCIe port: port %x, irq %d, type %d\n", sp->port.line, sp->port.iobase, sp->port.irq,
+        printk("Setup ttyWCH%d - PCIe port: port %lx, irq %d, type %d\n", sp->port.line, sp->port.iobase, sp->port.irq,
                sp->port.iotype);
     }
 
