@@ -462,7 +462,7 @@ struct wch_board {
 
     unsigned int ser_port_index;
 
-    unsigned int bar_addr[WCH_PCICFG_BAR_TOTAL];
+    unsigned long bar_addr[WCH_PCICFG_BAR_TOTAL];
     unsigned int irq;
     void *board_membase;
     unsigned int board_flag;
@@ -607,7 +607,7 @@ struct ser_port {
     spinlock_t lock;
     void *port_membase;
     void *board_membase;
-    unsigned int iobase;
+    unsigned long iobase;
     unsigned int irq;
     unsigned int uartclk;
     unsigned int fifosize;
@@ -632,7 +632,7 @@ struct ser_port {
     unsigned int bus_number;
     unsigned int dev_number;
     struct pci_board pb_info;
-    unsigned int vector;
+    unsigned long vector;
     unsigned int chip_iobase;
     unsigned int vector_mask;
     unsigned char chip_flag;
