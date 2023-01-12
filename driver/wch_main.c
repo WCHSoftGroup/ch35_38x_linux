@@ -790,7 +790,7 @@ int wch_register_irq(void)
     struct wch_board *sb = NULL;
     int status = 0;
     int i;
-    unsigned int chip_iobase;
+    unsigned long chip_iobase;
 
 #if WCH_DBG
     printk("%s : %s\n", __FILE__, __FUNCTION__);
@@ -861,7 +861,7 @@ void wch_release_irq(void)
 {
     struct wch_board *sb = NULL;
     int i;
-    unsigned int chip_iobase;
+    unsigned long chip_iobase;
 
 #if WCH_DBG
     printk("%s : %s\n", __FILE__, __FUNCTION__);
