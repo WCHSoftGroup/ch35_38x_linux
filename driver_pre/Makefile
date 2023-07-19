@@ -18,12 +18,15 @@ load:
 unload:
 	rmmod $(DRIVERNAME)
 install : modules
-	mkdir -p /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial
-	cp -f ./$(DRIVERNAME).ko /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial
+	insmod $(DRIVERNAME).ko || true
+	mkdir -p /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial || true
+	cp -f ./$(DRIVERNAME).ko /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial || true
+	echo "wch_pre\n" >> /etc/modules || true
 	depmod -a
 uninstall:
-	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial/$(DRIVERNAME).ko
-	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/char/$(DRIVERNAME).ko
-	rm -f /lib/modules/$(shell uname -r)/misc/$(DRIVERNAME).ko
+	rmmod $(DRIVERNAME).ko || true
+	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial/$(DRIVERNAME).ko || true
+	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/char/$(DRIVERNAME).ko || true
+	rm -f /lib/modules/$(shell uname -r)/misc/$(DRIVERNAME).ko || true
 	depmod -a
 endif
