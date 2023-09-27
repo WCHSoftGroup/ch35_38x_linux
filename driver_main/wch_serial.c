@@ -99,8 +99,14 @@ static int ser_ioctl(struct tty_struct *, struct file *, unsigned int, unsigned 
 #endif
 static void ser_hangup(struct tty_struct *);
 unsigned int ser_get_divisor(struct ser_port *, unsigned int, bool);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+unsigned int ser_get_baud_rate(struct ser_port *, struct WCHTERMIOS *, const struct WCHTERMIOS *, unsigned int,
+			       unsigned int);
+static void ser_change_speed(struct ser_state *state, const struct WCHTERMIOS *old_termios);
+#else
 unsigned int ser_get_baud_rate(struct ser_port *, struct WCHTERMIOS *, struct WCHTERMIOS *, unsigned int, unsigned int);
-static void ser_change_speed(struct ser_state *, struct WCHTERMIOS *);
+static void ser_change_speed(struct ser_state *state, struct WCHTERMIOS *old_termios);
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
 static void ser_set_termios(struct tty_struct *tty, const struct WCHTERMIOS *old_termios);
 #else
@@ -125,7 +131,11 @@ static void wch_ser_break_ctl(struct ser_port *, int);
 static int wch_ser_startup(struct ser_port *);
 static void wch_ser_shutdown(struct ser_port *);
 static unsigned int wch_ser_get_divisor(struct ser_port *, unsigned int, bool);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void wch_ser_set_termios(struct ser_port *, struct WCHTERMIOS *, const struct WCHTERMIOS *);
+#else
 static void wch_ser_set_termios(struct ser_port *, struct WCHTERMIOS *, struct WCHTERMIOS *);
+#endif
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 static void wch_ser_timeout(unsigned long);
 #else
@@ -1637,8 +1647,13 @@ unsigned int ser_get_divisor(struct ser_port *port, unsigned int baud, bool btwi
 	return quot;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+unsigned int ser_get_baud_rate(struct ser_port *port, struct WCHTERMIOS *termios, const struct WCHTERMIOS *old,
+			       unsigned int min, unsigned int max)
+#else
 unsigned int ser_get_baud_rate(struct ser_port *port, struct WCHTERMIOS *termios, struct WCHTERMIOS *old,
 			       unsigned int min, unsigned int max)
+#endif
 {
 	unsigned int try;
 	unsigned int baud;
@@ -1707,7 +1722,11 @@ unsigned int ser_get_baud_rate(struct ser_port *port, struct WCHTERMIOS *termios
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void ser_change_speed(struct ser_state *state, const struct WCHTERMIOS *old_termios)
+#else
 static void ser_change_speed(struct ser_state *state, struct WCHTERMIOS *old_termios)
+#endif
 {
 	struct tty_struct *tty = state->info->tty;
 	struct ser_port *port = state->port;
@@ -2394,7 +2413,12 @@ static unsigned int wch_ser_get_divisor(struct ser_port *port, unsigned int baud
 	return quot;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void wch_ser_set_termios(struct ser_port *port, struct WCHTERMIOS *termios, const struct WCHTERMIOS *old)
+#else
 static void wch_ser_set_termios(struct ser_port *port, struct WCHTERMIOS *termios, struct WCHTERMIOS *old)
+#
+#endif
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
 	unsigned char cval;
@@ -2833,7 +2857,9 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 	drv->tty_driver = normal;
 #endif
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	normal->magic = TTY_DRIVER_MAGIC;
+#endif
 	normal->name = drv->dev_name;
 	normal->major = drv->major;
 	normal->minor_start = drv->minor;
