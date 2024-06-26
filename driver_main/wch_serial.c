@@ -1,6 +1,8 @@
 #include "wch_common.h"
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
+static DEFINE_SEMAPHORE(ser_port_sem, 1);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
 static DEFINE_SEMAPHORE(ser_port_sem);
 #else
 static DECLARE_MUTEX(ser_port_sem);
@@ -2796,6 +2798,44 @@ static _INLINE_ void ser_handle_port(struct wch_ser_port *sp, unsigned char iir)
 	}
 }
 
+static int ser_proc_show(struct seq_file *m, void *v)
+{
+	struct wch_board *sb = NULL;
+	int i, j;
+
+	seq_puts(m, "ch35_38xserinfo:1.0 driver:1.25\n");
+
+	for (i = 0; i < WCH_BOARDS_MAX; i++) {
+		sb = &wch_board_table[i];
+		if (!sb)
+			continue;
+
+		for (j = 0; j < sb->ser_ports; j++) {
+			seq_printf(m, "%d:", j);
+			seq_printf(m, " module:%s", "ch35_38x");
+			seq_printf(m, " VID:%4x PID:0x%4x", sb->pdev->vendor, sb->pdev->device);
+			seq_printf(m, " num_ports:%d", sb->ser_ports);
+			seq_printf(m, " port:%d", j);
+			seq_printf(m, " bus:%s", sb->pdev->bus->name);
+			seq_putc(m, '\n');
+		}
+	}
+
+	return 0;
+}
+
+static int ser_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, ser_proc_show, NULL);
+}
+
+static const struct file_operations ser_proc_fops = {
+	.open = ser_proc_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 static struct tty_operations wch_tty_ops = {
 	.open = ser_open,
@@ -2818,6 +2858,11 @@ static struct tty_operations wch_tty_ops = {
 	.wait_until_sent = ser_wait_until_sent,
 	.tiocmget = ser_tiocmget,
 	.tiocmset = ser_tiocmset,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0))
+	.proc_fops = &ser_proc_fops,
+#else
+	.proc_show = ser_proc_show,
+#endif
 };
 #endif
 
@@ -2860,6 +2905,7 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	normal->magic = TTY_DRIVER_MAGIC;
 #endif
+	normal->driver_name = "pci_ch35_38x";
 	normal->name = drv->dev_name;
 	normal->major = drv->major;
 	normal->minor_start = drv->minor;
@@ -2872,6 +2918,7 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 	normal->init_termios = tty_std_termios;
 	normal->init_termios.c_cflag = B9600 | CS8 | CREAD | HUPCL | CLOCAL;
 	normal->init_termios.c_iflag = 0;
+	normal->flags |= TTY_DRIVER_DYNAMIC_DEV;
 
 	normal->driver_state = drv;
 
@@ -2934,6 +2981,11 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 		goto out;
 	}
 
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
+		struct wch_ser_port *sp = &wch_ser_table[i];
+		tty_register_device(normal, sp->port.line, sp->port.dev);
+	}
+
 out:
 	if (ret < 0) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
@@ -2950,6 +3002,7 @@ out:
 extern void wch_ser_unregister_driver(struct ser_driver *drv)
 {
 	struct tty_driver *normal;
+	int i;
 #if WCH_DBG
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
 #endif
@@ -2958,6 +3011,9 @@ extern void wch_ser_unregister_driver(struct ser_driver *drv)
 	normal = drv->tty_driver;
 	if (!normal) {
 		return;
+	}
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
+		tty_unregister_device(normal, i);
 	}
 
 	tty_unregister_driver(normal);
@@ -2969,6 +3025,10 @@ extern void wch_ser_unregister_driver(struct ser_driver *drv)
 		return;
 	}
 
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
+		tty_unregister_device(normal, i);
+	}
+
 	tty_unregister_driver(normal);
 	put_tty_driver(normal);
 	drv->tty_driver = NULL;
@@ -2976,6 +3036,9 @@ extern void wch_ser_unregister_driver(struct ser_driver *drv)
 	normal = &drv->tty_driver;
 	if (!normal) {
 		return;
+	}
+	for (i = 0; i < wch_ser_port_total_cnt; i++) {
+		tty_unregister_device(normal, i);
 	}
 
 	tty_unregister_driver(normal);
