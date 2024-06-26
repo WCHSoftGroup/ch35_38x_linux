@@ -1,3 +1,5 @@
+CONFIG_MODULE_SIG=n
+
 DRIVERNAME := wch
 all : modules
 
@@ -21,7 +23,7 @@ install : modules
 	insmod $(DRIVERNAME).ko || true
 	mkdir -p /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial || true
 	cp -f ./$(DRIVERNAME).ko /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial || true
-	echo "wch\n" >> /etc/modules || true
+	@/bin/echo -e "wch" >> /etc/modules || true
 	depmod -a
 uninstall:
 	rmmod $(DRIVERNAME) || true

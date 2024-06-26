@@ -1,7 +1,7 @@
 /*
- * PCI/PCIE to serial driver for ch351/352/353/355/356/357/358/359/382/384, etc.
+ * PCI/PCIe to serial driver for ch351/352/353/355/356/357/358/359/382/384, etc.
  *
- * Copyright (C) 2023 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (C) 2024 Nanjing Qinheng Microelectronics Co., Ltd.
  * Web: 	http://wch.cn
  * Author:	WCH <tech@wch.cn>
  *
@@ -30,6 +30,8 @@
  * V1.23 - add support for kernel version beyond 5.14.x
  * V1.24 - fix ch351/2/3 uart0 setting bug
  *       - add support for kernel version beyond 6.1.x
+ * V1.25 - add support for kernel version beyond 6.3.x
+ *       - add support for QT serial port library
  */
 
 #include "wch_common.h"
@@ -445,6 +447,7 @@ static int wch_assign_resource(void)
 				}
 
 				for (j = 0; j < sb->ser_ports; j++, ser_n++, sp++) {
+					sp->port.dev = &sb->pdev->dev;
 					sp->port.chip_flag = sb->pb_info.port[j].chip_flag;
 					sp->port.iobase =
 						sb->bar_addr[sb->pb_info.port[j].bar1] + sb->pb_info.port[j].offset1;
