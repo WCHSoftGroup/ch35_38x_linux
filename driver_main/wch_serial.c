@@ -60,7 +60,11 @@ static unsigned int ser_chars_in_buffer(struct tty_struct *tty);
 static int ser_chars_in_buffer(struct tty_struct *tty);
 #endif
 static void ser_flush_buffer(struct tty_struct *);
-static void ser_send_xchar(struct tty_struct *, char);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0))
+static void ser_send_xchar(struct tty_struct *tty, u8 ch);
+#else
+static void ser_send_xchar(struct tty_struct *tty, char ch);
+#endif
 static void ser_throttle(struct tty_struct *);
 static void ser_unthrottle(struct tty_struct *);
 static int ser_get_info(struct ser_state *, struct serial_struct *);
@@ -70,10 +74,12 @@ static unsigned int ser_write_room(struct tty_struct *tty);
 #else
 static int ser_write_room(struct tty_struct *tty);
 #endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 10))
-static int ser_write(struct tty_struct *, const unsigned char *, int);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0))
+static ssize_t ser_write(struct tty_struct *tty, const u8 *buf, size_t count);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 10))
+static int ser_write(struct tty_struct *tty, const unsigned char *buf, int count);
 #else
-static int ser_write(struct tty_struct *, int, const unsigned char *, int);
+static int ser_write(struct tty_struct *tty, int from_user, const unsigned char *buf, int count);
 #endif
 // static int ser_get_lsr_info(struct ser_state *, unsigned int *);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39))
@@ -775,7 +781,11 @@ static void ser_flush_buffer(struct tty_struct *tty)
 #endif
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0))
+static void ser_send_xchar(struct tty_struct *tty, u8 ch)
+#else
 static void ser_send_xchar(struct tty_struct *tty, char ch)
+#endif
 {
 	struct ser_state *state = NULL;
 	struct ser_port *port = NULL;
@@ -1023,7 +1033,9 @@ static int ser_write_room(struct tty_struct *tty)
 	return status;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 10))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0))
+static ssize_t ser_write(struct tty_struct *tty, const u8 *buf, size_t count)
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 10))
 static int ser_write(struct tty_struct *tty, const unsigned char *buf, int count)
 #else
 static int ser_write(struct tty_struct *tty, int from_user, const unsigned char *buf, int count)
@@ -2232,7 +2244,7 @@ done:
 static void wch_ser_set_mctrl(struct ser_port *port, unsigned int mctrl)
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
-	unsigned char mcr = 0;
+	unsigned char mcr = READ_UART_MCR(sp);
 
 	if (mctrl & TIOCM_RTS) {
 		mcr |= UART_MCR_RTS;
@@ -2798,10 +2810,15 @@ static _INLINE_ void ser_handle_port(struct wch_ser_port *sp, unsigned char iir)
 	}
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30))
 static int ser_proc_show(struct seq_file *m, void *v)
 {
 	struct wch_board *sb = NULL;
+	struct wch_ser_port *sp = NULL;
+	struct ser_port *port;
 	int i, j;
+	unsigned int status;
+	char stat_buf[32];
 
 	seq_puts(m, "ch35_38xserinfo:1.0 driver:1.25\n");
 
@@ -2811,13 +2828,55 @@ static int ser_proc_show(struct seq_file *m, void *v)
 			continue;
 
 		for (j = 0; j < sb->ser_ports; j++) {
-			seq_printf(m, "%d:", j);
+			sp = &wch_ser_table[sb->ser_port_index + j];
+			port = &sp->port;
+
+			mutex_lock(&sp->proc_mutex);
+			seq_printf(m, "%d:", j + sb->ser_port_index);
 			seq_printf(m, " module:%s", "ch35_38x");
 			seq_printf(m, " VID:%4x PID:0x%4x", sb->pdev->vendor, sb->pdev->device);
 			seq_printf(m, " num_ports:%d", sb->ser_ports);
 			seq_printf(m, " port:%d", j);
 			seq_printf(m, " bus:%s", sb->pdev->bus->name);
+
+			seq_printf(m, " rx:%d", port->icount.rx);
+			seq_printf(m, " tx:%d", port->icount.tx);
+
+			if (port->icount.frame)
+				seq_printf(m, " frame:%d", port->icount.frame);
+			if (port->icount.parity)
+				seq_printf(m, " parity:%d", port->icount.parity);
+			if (port->icount.brk)
+				seq_printf(m, " brk:%d", port->icount.brk);
+			if (port->icount.buf_overrun)
+				seq_printf(m, " overrun:%d", port->icount.buf_overrun);
+
+#define INFOBIT(bit, str)        \
+	if (port->mctrl & (bit)) \
+	strncat(stat_buf, (str), sizeof(stat_buf) - strlen(stat_buf) - 2)
+#define STATBIT(bit, str)   \
+	if (status & (bit)) \
+	strncat(stat_buf, (str), sizeof(stat_buf) - strlen(stat_buf) - 2)
+
+			stat_buf[0] = '\0';
+			stat_buf[1] = '\0';
+			INFOBIT(TIOCM_RTS, "|RTS");
+			INFOBIT(TIOCM_DTR, "|DTR");
+
+			spin_lock_irq(&sp->port.lock);
+			status = READ_UART_MSR(sp);
+			spin_unlock_irq(&sp->port.lock);
+
+			STATBIT(TIOCM_CTS, "|CTS");
+			STATBIT(TIOCM_DSR, "|DSR");
+			STATBIT(TIOCM_CAR, "|CD");
+			STATBIT(TIOCM_RNG, "|RI");
+			if (stat_buf[0])
+				stat_buf[0] = ' ';
+			seq_puts(m, stat_buf);
+
 			seq_putc(m, '\n');
+			mutex_unlock(&sp->proc_mutex);
 		}
 	}
 
@@ -2835,6 +2894,7 @@ static const struct file_operations ser_proc_fops = {
 	.llseek = seq_lseek,
 	.release = single_release,
 };
+#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 static struct tty_operations wch_tty_ops = {
@@ -2858,10 +2918,10 @@ static struct tty_operations wch_tty_ops = {
 	.wait_until_sent = ser_wait_until_sent,
 	.tiocmget = ser_tiocmget,
 	.tiocmset = ser_tiocmset,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0))
-	.proc_fops = &ser_proc_fops,
-#else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
 	.proc_show = ser_proc_show,
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30))
+	.proc_fops = &ser_proc_fops,
 #endif
 };
 #endif
