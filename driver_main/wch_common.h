@@ -106,7 +106,7 @@
 WCH driver information
 *******************************************************/
 #define WCH_DRIVER_VERSION "1.25"
-#define WCH_DRIVER_DATE	   "2024.06"
+#define WCH_DRIVER_DATE	   "2024.08"
 #define WCH_DRIVER_AUTHOR  "WCH GROUP"
 #define WCH_DRIVER_DESC	   "WCH Multi-I/O Board Driver Module"
 
@@ -246,6 +246,10 @@ extern int wch_ser_port_total_cnt;
 /*******************************************************
  * uart information
  *******************************************************/
+
+// rs485 function enable
+#define RS485_ENABLE
+#undef RS485_ENABLE
 
 // external crystal freq
 #define CRYSTAL_FREQ 22118400
@@ -459,7 +463,6 @@ struct wch_board {
 	unsigned int dev_number;
 
 	unsigned int ser_ports;
-
 	unsigned int ser_port_index;
 
 	unsigned long bar_addr[WCH_PCICFG_BAR_TOTAL];
@@ -773,6 +776,7 @@ struct wch_ser_port {
 	struct timer_list timer;
 	struct list_head list;
 
+	struct mutex proc_mutex;
 	unsigned int capabilities;
 	unsigned char ier;
 	unsigned char lcr;

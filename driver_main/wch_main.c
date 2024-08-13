@@ -32,6 +32,8 @@
  *       - add support for kernel version beyond 6.1.x
  * V1.25 - add support for kernel version beyond 6.3.x
  *       - add support for QT serial port library
+ *       - add support for procfs and registers viewing
+ *       - add support for rs485 auto configuration
  */
 
 #include "wch_common.h"
@@ -154,6 +156,71 @@ struct wch_ser_port wch_ser_table[WCH_SER_TOTAL_MAX + 1];
 
 int wch_ser_port_total_cnt;
 unsigned char ch365_32s = 0;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
+struct kobject *kobj_ref;
+volatile int reg_dump = 0;
+
+static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	int i, j;
+	unsigned int lcr, dll, dlm;
+	struct wch_board *sb = NULL;
+	struct wch_ser_port *sp = NULL;
+
+	for (i = 0; i < WCH_BOARDS_MAX; i++) {
+		sb = &wch_board_table[i];
+
+		if ((sb->board_enum > 0) && (sb->ser_ports > 0)) {
+			printk("===============================WCH %s board===============================\n",
+			       sb->pb_info.board_name);
+			sp = &wch_ser_table[sb->ser_port_index];
+
+			for (j = 0; j < sb->ser_ports; j++, sp++) {
+				lcr = inb(sp->port.iobase + UART_LCR);
+
+				outb(lcr | UART_LCR_DLAB, (sp->port.iobase + UART_LCR));
+				dll = inb(sp->port.iobase + UART_DLL);
+				dlm = inb(sp->port.iobase + UART_DLM);
+
+				outb(lcr, sp->port.iobase + UART_LCR);
+
+				printk("UART%2d - IER:%02x IIR:%02x LCR:%02x MCR:%02x LSR:%02x MSR:%02x SCR:%02x DLL:%02x DLM:%02x\n",
+				       j + sb->ser_port_index, inb(sp->port.iobase + UART_IER),
+				       inb(sp->port.iobase + UART_IIR), lcr, inb(sp->port.iobase + UART_MCR),
+				       inb(sp->port.iobase + UART_LSR), inb(sp->port.iobase + UART_MSR),
+				       inb(sp->port.iobase + UART_SCR), dll, dlm);
+			}
+		}
+	}
+
+	return 0;
+}
+
+static ssize_t reg_dump_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	return count;
+}
+
+struct kobj_attribute sysfs_attr = __ATTR(reg_dump, 0664, reg_dump_show, reg_dump_store);
+
+static void wch_pci_create_sysfs(void)
+{
+	kobj_ref = kobject_create_and_add("wch_pci", NULL);
+
+	if (sysfs_create_file(kobj_ref, &sysfs_attr.attr)) {
+		printk("sysfs_create_file error\n");
+		goto error_sysfs;
+	}
+
+	return;
+
+error_sysfs:
+	kobject_put(kobj_ref);
+	sysfs_remove_file(kernel_kobj, &sysfs_attr.attr);
+	return;
+}
+#endif
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 18))
 static irqreturn_t wch_interrupt(int irq, void *dev_id)
@@ -334,6 +401,9 @@ static int wch_pci_board_probe(void)
 		sb->board_number = board_cnt - 1;
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
+	wch_pci_create_sysfs();
+#endif
 	if (board_cnt == 0) {
 		printk("WCH Info : No WCH Multi-I/O Board Found !\n\n");
 		status = -ENXIO;
@@ -421,6 +491,9 @@ static int wch_assign_resource(void)
 	int j;
 	int ser_n;
 	int ser_port_index = 0;
+#ifdef RS485_ENABLE
+	unsigned char cval, mval;
+#endif
 
 #if WCH_DBG
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
@@ -447,6 +520,7 @@ static int wch_assign_resource(void)
 				}
 
 				for (j = 0; j < sb->ser_ports; j++, ser_n++, sp++) {
+					mutex_init(&sp->proc_mutex);
 					sp->port.dev = &sb->pdev->dev;
 					sp->port.chip_flag = sb->pb_info.port[j].chip_flag;
 					sp->port.iobase =
@@ -457,11 +531,28 @@ static int wch_assign_resource(void)
 					if (inb(sp->port.iobase + UART_SCR) != 0x55) {
 						status = -ENXIO;
 						if (j == 0)
-							printk("WCH Error: pci/pcie address error !\n");
+							printk("WCH Error: pci/pcie address error!\n");
 						else
-							printk("WCH Error: ch432/ch438 communication error !\n");
+							printk("WCH Error: ch432/ch438 communication error(p%d)!\n", j);
 						return status;
 					}
+
+#ifdef RS485_ENABLE
+					if (sp->port.chip_flag == WCH_BOARD_CH382_2S ||
+					    sp->port.chip_flag == WCH_BOARD_CH382_2S1P ||
+					    sp->port.chip_flag == WCH_BOARD_CH384_4S ||
+					    sp->port.chip_flag == WCH_BOARD_CH384_4S1P ||
+					    sp->port.chip_flag == WCH_BOARD_CH351_2S) {
+						cval = inb(sp->port.iobase + UART_LCR);
+						mval = inb(sp->port.iobase + UART_MCR);
+						outb(cval | UART_LCR_DLAB, sp->port.iobase + UART_LCR);
+						if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
+							outb(mval | BIT(6), sp->port.iobase + UART_MCR);
+						else
+							outb(mval | BIT(7), sp->port.iobase + UART_MCR);
+						outb(cval, sp->port.iobase + UART_LCR);
+					}
+#endif
 
 					if ((sb->board_flag & BOARDFLAG_REMAP) == BOARDFLAG_REMAP) {
 						sp->port.vector = 0;
@@ -847,7 +938,7 @@ void ch365_32s_test(void)
 }
 #endif
 
-int wch_register_irq(void)
+static int wch_register_irq(void)
 {
 	struct wch_board *sb = NULL;
 	int status = 0;
@@ -902,7 +993,7 @@ int wch_register_irq(void)
 	return status;
 }
 
-void wch_iounmap(void)
+static void wch_iounmap(void)
 {
 	struct wch_board *sb = NULL;
 	int i;
@@ -920,7 +1011,7 @@ void wch_iounmap(void)
 	}
 }
 
-void wch_release_irq(void)
+static void wch_release_irq(void)
 {
 	struct wch_board *sb = NULL;
 	int i;
@@ -1038,6 +1129,10 @@ static void __exit wch_exit(void)
 	printk("====================  WCH Device Driver Module Uninstall  ====================\n");
 	printk("\n");
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30))
+	kobject_put(kobj_ref);
+	sysfs_remove_file(kernel_kobj, &sysfs_attr.attr);
+#endif
 	wch_ser_unregister_ports(&wch_ser_reg);
 	printk("***********wch_ser_unregister_ports***************\n");
 	wch_ser_unregister_driver(&wch_ser_reg);
