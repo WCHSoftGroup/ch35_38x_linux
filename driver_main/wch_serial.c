@@ -135,6 +135,7 @@ static void wch_ser_stop_tx(struct ser_port *, unsigned int);
 static void wch_ser_start_tx(struct ser_port *, unsigned int);
 static void wch_ser_stop_rx(struct ser_port *);
 static void wch_ser_enable_ms(struct ser_port *);
+static void wch_ser_disable_ms(struct ser_port *);
 static void wch_ser_break_ctl(struct ser_port *, int);
 static int wch_ser_startup(struct ser_port *);
 static void wch_ser_shutdown(struct ser_port *);
@@ -1893,6 +1894,45 @@ static void ser_update_timeout(struct ser_port *port, unsigned int cflag, unsign
 	port->timeout = (HZ * bits) / baud + HZ / 50;
 }
 
+static void ser_set_ldisc(struct tty_struct *tty)
+{
+	struct ser_state *state = NULL;
+	struct ser_port *port = NULL;
+	struct ktermios *termios = &tty->termios;
+
+#if WCH_DBG
+	printk("%s : %s\n", __FILE__, __FUNCTION__);
+#endif
+
+	state = tty->driver_data;
+	if (state == NULL) {
+		return;
+	}
+	port = state->port;
+	if (port == NULL) {
+		return;
+	}
+	if (termios->c_line == N_PPS) {
+		port->flags |= WCH_UPF_HARDPPS_CD;
+		spin_lock_irq(&port->lock);
+		wch_ser_enable_ms(port);
+		spin_unlock_irq(&port->lock);
+#if WCH_DBG
+		printk("  MS irq enabled with N_PPS.\n");
+#endif
+	} else {
+		port->flags &= ~WCH_UPF_HARDPPS_CD;
+		if (!WCH_ENABLE_MS(port, termios->c_cflag)) {
+			spin_lock_irq(&port->lock);
+			wch_ser_disable_ms(port);
+			spin_unlock_irq(&port->lock);
+#if WCH_DBG
+		printk("  MS irq disabled.\n");
+#endif
+		}
+	}
+}
+
 static struct ser_state *ser_get(struct ser_driver *drv, int line)
 {
 	struct ser_state *state = NULL;
@@ -2342,6 +2382,13 @@ static void wch_ser_enable_ms(struct ser_port *port)
 {
 	struct wch_ser_port *sp = (struct wch_ser_port *)port;
 	sp->ier |= UART_IER_MSI;
+	WRITE_UART_IER(sp, sp->ier);
+}
+
+static void wch_ser_disable_ms(struct ser_port *port)
+{
+	struct wch_ser_port *sp = (struct wch_ser_port *)port;
+	sp->ier &= ~UART_IER_MSI;
 	WRITE_UART_IER(sp, sp->ier);
 }
 
@@ -2911,6 +2958,7 @@ static struct tty_operations wch_tty_ops = {
 	.unthrottle = ser_unthrottle,
 	.send_xchar = ser_send_xchar,
 	.set_termios = ser_set_termios,
+	.set_ldisc = ser_set_ldisc,
 	.stop = ser_stop,
 	.start = ser_start,
 	.hangup = ser_hangup,
@@ -3003,6 +3051,7 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 	normal->unthrottle = ser_unthrottle;
 	normal->send_xchar = ser_send_xchar;
 	normal->set_termios = ser_set_termios;
+	normal->set_ldisc = ser_set_ldisc;
 	normal->stop = ser_stop;
 	normal->start = ser_start;
 	normal->hangup = ser_hangup;
