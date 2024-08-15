@@ -677,23 +677,24 @@ static inline void ser_handle_dcd_change(struct ser_port *port, unsigned int sta
 	struct ser_info *info = port->info;
 	struct tty_struct *tty = info->tty;
 
-	if (tty) {
+	if ((port->flags & WCH_UPF_HARDPPS_CD) &&  tty) {
 		struct tty_ldisc *ld = tty_ldisc_ref(tty);
 
 		if (ld) {
 			if (ld->ops->dcd_change)
-				ld->ops->dcd_change(tty, status);
+				ld->ops->dcd_change(tty, status); // should be pps_tty_dcd_change()
 			tty_ldisc_deref(ld);
 		}
 	}
+	else {
+		port->icount.dcd++;
 
-	port->icount.dcd++;
-
-	if (info->flags & WCH_UIF_CHECK_CD) {
-		if (status) {
-			wake_up_interruptible(&info->open_wait);
-		} else if (info->tty) {
-			tty_hangup(info->tty);
+		if (info->flags & WCH_UIF_CHECK_CD) {
+			if (status) {
+				wake_up_interruptible(&info->open_wait);
+			} else if (info->tty) {
+				tty_hangup(info->tty);
+			}
 		}
 	}
 }
