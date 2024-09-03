@@ -158,7 +158,7 @@ int wch_ser_port_total_cnt;
 unsigned char ch365_32s = 0;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
-struct kobject *kobj_ref;
+struct kobject *kobj_ref = NULL;
 volatile int reg_dump = 0;
 
 static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -207,6 +207,8 @@ struct kobj_attribute sysfs_attr = __ATTR(reg_dump, 0664, reg_dump_show, reg_dum
 static void wch_pci_create_sysfs(void)
 {
 	kobj_ref = kobject_create_and_add("wch_pci", NULL);
+	if (!kobj_ref)
+		return;
 
 	if (sysfs_create_file(kobj_ref, &sysfs_attr.attr)) {
 		printk("sysfs_create_file error\n");
@@ -217,7 +219,7 @@ static void wch_pci_create_sysfs(void)
 
 error_sysfs:
 	kobject_put(kobj_ref);
-	sysfs_remove_file(kernel_kobj, &sysfs_attr.attr);
+	kobj_ref = NULL;
 	return;
 }
 #endif
@@ -401,9 +403,6 @@ static int wch_pci_board_probe(void)
 		sb->board_number = board_cnt - 1;
 	}
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
-	wch_pci_create_sysfs();
-#endif
 	if (board_cnt == 0) {
 		printk("WCH Info : No WCH Multi-I/O Board Found !\n\n");
 		status = -ENXIO;
@@ -1098,6 +1097,10 @@ static int __init wch_init(void)
 		goto step3_fail;
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
+	wch_pci_create_sysfs();
+#endif
+
 #if WCH_DBG
 	wch_debug();
 //	ch365_32s_test();
@@ -1130,8 +1133,10 @@ static void __exit wch_exit(void)
 	printk("\n");
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30))
-	kobject_put(kobj_ref);
-	sysfs_remove_file(kernel_kobj, &sysfs_attr.attr);
+	if (kobj_ref) {
+		sysfs_remove_file(kobj_ref, &sysfs_attr.attr);
+		kobject_put(kobj_ref);
+	}
 #endif
 	wch_ser_unregister_ports(&wch_ser_reg);
 	printk("***********wch_ser_unregister_ports***************\n");

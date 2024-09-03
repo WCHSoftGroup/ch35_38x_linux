@@ -96,6 +96,7 @@
 #endif
 
 #include <linux/sched.h>
+#include <linux/seq_file.h>
 
 /*-------------------------------------------------------------------------------
 
@@ -106,7 +107,7 @@
 WCH driver information
 *******************************************************/
 #define WCH_DRIVER_VERSION "1.25"
-#define WCH_DRIVER_DATE	   "2024.08"
+#define WCH_DRIVER_DATE	   "2024.09"
 #define WCH_DRIVER_AUTHOR  "WCH GROUP"
 #define WCH_DRIVER_DESC	   "WCH Multi-I/O Board Driver Module"
 
