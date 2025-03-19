@@ -34,6 +34,7 @@
  *       - add support for QT serial port library
  *       - add support for procfs and registers viewing
  *       - add support for rs485 auto configuration
+ * V1.26 - add support for 8HS/10HS/16HS and 20S mode
  */
 
 #include "wch_common.h"
@@ -92,6 +93,14 @@ static struct pci_device_id wch_pci_board_id[] = {
 	  WCH_BOARD_CH384_28S },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH365_32S, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH365_32S, 0, 0,
 	  WCH_BOARD_CH365_32S },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_8HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_8HS, 0, 0,
+	  WCH_BOARD_CH384_8HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_10HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_10HS, 0, 0,
+	  WCH_BOARD_CH384_10HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_16HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_16HS, 0, 0,
+	  WCH_BOARD_CH384_16HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_20S, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_20S, 0, 0,
+	  WCH_BOARD_CH384_20S },
 	{ 0 }
 };
 MODULE_DEVICE_TABLE(pci, wch_pci_board_id);
@@ -147,6 +156,14 @@ static struct wch_pci_info wch_pci_board_id[] = {
 	  WCH_BOARD_CH384_28S },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH365_32S, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH365_32S,
 	  WCH_BOARD_CH365_32S },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_8HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_8HS,
+	  WCH_BOARD_CH384_8HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_10HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_10HS,
+	  WCH_BOARD_CH384_10HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_16HS, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_16HS,
+	  WCH_BOARD_CH384_16HS },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_20S, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_20S,
+	  WCH_BOARD_CH384_20S },
 	{ 0 }
 };
 #endif
@@ -262,6 +279,7 @@ static void wch_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 
 	if (status != 0) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+		handled = IRQ_NONE;
 		return handled;
 #else
 		return;
@@ -280,6 +298,7 @@ static void wch_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 
 	if (status != 0) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+		handled = IRQ_NONE;
 		return handled;
 #else
 		return;
@@ -490,9 +509,6 @@ static int wch_assign_resource(void)
 	int j;
 	int ser_n;
 	int ser_port_index = 0;
-#ifdef RS485_ENABLE
-	unsigned char cval, mval;
-#endif
 
 #if WCH_DBG
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
@@ -536,12 +552,18 @@ static int wch_assign_resource(void)
 						return status;
 					}
 
-#ifdef RS485_ENABLE
-					if (sp->port.chip_flag == WCH_BOARD_CH382_2S ||
+					if (sb->pb_info.port[j].rs485_enable && (sp->port.chip_flag == WCH_BOARD_CH382_2S ||
 					    sp->port.chip_flag == WCH_BOARD_CH382_2S1P ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S1P ||
-					    sp->port.chip_flag == WCH_BOARD_CH351_2S) {
+						sp->port.chip_flag == WCH_BOARD_CH384_28S ||
+					    sp->port.chip_flag == WCH_BOARD_CH351_2S || 
+						sp->port.chip_flag == WCH_BOARD_CH384_8HS ||
+						sp->port.chip_flag == WCH_BOARD_CH384_10HS ||
+						sp->port.chip_flag == WCH_BOARD_CH384_16HS ||
+						sp->port.chip_flag == WCH_BOARD_CH384_20S)) {
+						unsigned char cval, mval;
+						
 						cval = inb(sp->port.iobase + UART_LCR);
 						mval = inb(sp->port.iobase + UART_MCR);
 						outb(cval | UART_LCR_DLAB, sp->port.iobase + UART_LCR);
@@ -551,7 +573,6 @@ static int wch_assign_resource(void)
 							outb(mval | BIT(7), sp->port.iobase + UART_MCR);
 						outb(cval, sp->port.iobase + UART_LCR);
 					}
-#endif
 
 					if ((sb->board_flag & BOARDFLAG_REMAP) == BOARDFLAG_REMAP) {
 						sp->port.vector = 0;
@@ -623,6 +644,52 @@ static int wch_assign_resource(void)
 											(j - 0x1C) * 0x10;
 							}
 						}
+					} else if ((sb->board_flag & BOARDFLAG_CH384_8H_PORTS) ==
+						   BOARDFLAG_CH384_8H_PORTS) {
+						sp->port.chip_iobase = sb->bar_addr[sb->pb_info.port[j].bar1];
+						if (j >= 0 && j < 0x04) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset;
+						} else if (j >= 0x04 && j < 0x08) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_1;
+						}
+					} else if ((sb->board_flag & BOARDFLAG_CH384_10H_PORTS) ==
+						   BOARDFLAG_CH384_10H_PORTS) {
+						sp->port.chip_iobase = sb->bar_addr[sb->pb_info.port[j].bar1];
+						if (j >= 0 && j < 0x04) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset;
+						} else if (j >= 0x04 && j < 0x0A) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_1;
+						}
+					} else if ((sb->board_flag & BOARDFLAG_CH384_16H_PORTS) ==
+						   BOARDFLAG_CH384_16H_PORTS) {
+						sp->port.chip_iobase = sb->bar_addr[sb->pb_info.port[j].bar1];
+						if (j >= 0 && j < 0x04) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset;
+						} else if (j >= 0x04 && j < 0x0B) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_1;
+						} else if (j >= 0x0B && j < 0x10) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_2;
+						}
+					} else if ((sb->board_flag & BOARDFLAG_CH384_20H_PORTS) ==
+						   BOARDFLAG_CH384_20H_PORTS) {
+						sp->port.chip_iobase = sb->bar_addr[sb->pb_info.port[j].bar1];
+						if (j >= 0 && j < 0x04) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset;
+						} else if (j >= 0x04 && j < 0x0C) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_1;
+						} else if (j >= 0x0C && j < 0x14) {
+							sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
+									  sb->pb_info.intr_vector_offset_2;
+						}
 					} else {
 						sp->port.vector = sb->bar_addr[sb->pb_info.intr_vector_bar] +
 								  sb->pb_info.intr_vector_offset;
@@ -683,6 +750,11 @@ static int wch_ser_port_table_init(void)
 				} else if (sp->port.chip_flag == WCH_BOARD_CH384_28S) {
 					if ((n == sb->ser_port_index + 4) || (n == sb->ser_port_index + 12) ||
 					    (n == sb->ser_port_index + 20))
+						sp->port.bext1stport = true;
+					else
+						sp->port.bext1stport = false;
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_20S) {
+					if ((n == sb->ser_port_index + 4) || (n == sb->ser_port_index + 12))
 						sp->port.bext1stport = true;
 					else
 						sp->port.bext1stport = false;
@@ -797,6 +869,42 @@ static int wch_ser_port_table_init(void)
 					sp->port.type = PORT_SER_16750;
 					sp->port.fifosize = CH438_FIFOSIZE_SET;
 					sp->port.rx_trigger = CH438_TRIGGER_LEVEL_SET;
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_8HS) {
+					sp->port.type = PORT_SER_16750;
+					if (j >= 0 && j < 0x04) {
+						sp->port.fifosize = CH384_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH384_TRIGGER_LEVEL_SET;
+					} else {
+						sp->port.fifosize = CH358_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH358_TRIGGER_LEVEL_SET;
+					}
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_10HS) {
+					sp->port.type = PORT_SER_16750;
+					if (j >= 0 && j < 0x04) {
+						sp->port.fifosize = CH384_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH384_TRIGGER_LEVEL_SET;
+					} else {
+						sp->port.fifosize = CH358_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH358_TRIGGER_LEVEL_SET;
+					}
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_16HS) {
+					sp->port.type = PORT_SER_16750;
+					if (j >= 0 && j < 0x04) {
+						sp->port.fifosize = CH384_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH384_TRIGGER_LEVEL_SET;
+					} else {
+						sp->port.fifosize = CH358_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH358_TRIGGER_LEVEL_SET;
+					}
+				} else if (sp->port.chip_flag == WCH_BOARD_CH384_20S) {
+					sp->port.type = PORT_SER_16750;
+					if (j >= 0 && j < 0x04) {
+						sp->port.fifosize = CH384_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH384_TRIGGER_LEVEL_SET;
+					} else {
+						sp->port.fifosize = CH358_FIFOSIZE_SET;
+						sp->port.rx_trigger = CH358_TRIGGER_LEVEL_SET;
+					}
 				} else {
 					sp->port.type = PORT_SER_16450;
 					sp->port.fifosize = DEFAULT_FIFOSIZE;
@@ -979,7 +1087,11 @@ static int wch_register_irq(void)
 		}
 
 		if (((sb->board_flag & BOARDFLAG_CH384_8_PORTS) == BOARDFLAG_CH384_8_PORTS) ||
-		    ((sb->board_flag & BOARDFLAG_CH384_28_PORTS) == BOARDFLAG_CH384_28_PORTS)) {
+		    ((sb->board_flag & BOARDFLAG_CH384_28_PORTS) == BOARDFLAG_CH384_28_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_8H_PORTS) == BOARDFLAG_CH384_8H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_10H_PORTS) == BOARDFLAG_CH384_10H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_16H_PORTS) == BOARDFLAG_CH384_16H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_20H_PORTS) == BOARDFLAG_CH384_20H_PORTS)) {
 			chip_iobase = sb->bar_addr[0];
 			if (chip_iobase) {
 				outb(inb(chip_iobase + 0xEB) | 0x02, chip_iobase + 0xEB);
@@ -1030,7 +1142,11 @@ static void wch_release_irq(void)
 			outb(inb(sb->bar_addr[0] + 0xF8) | 0x01, sb->bar_addr[0] + 0xF8);
 		}
 		if (((sb->board_flag & BOARDFLAG_CH384_8_PORTS) == BOARDFLAG_CH384_8_PORTS) ||
-		    ((sb->board_flag & BOARDFLAG_CH384_28_PORTS) == BOARDFLAG_CH384_28_PORTS)) {
+		    ((sb->board_flag & BOARDFLAG_CH384_28_PORTS) == BOARDFLAG_CH384_28_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_8H_PORTS) == BOARDFLAG_CH384_8H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_10H_PORTS) == BOARDFLAG_CH384_10H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_16H_PORTS) == BOARDFLAG_CH384_16H_PORTS) ||
+			((sb->board_flag & BOARDFLAG_CH384_20H_PORTS) == BOARDFLAG_CH384_20H_PORTS)) {
 			chip_iobase = sb->bar_addr[0];
 			if (chip_iobase)
 				outb(inb(chip_iobase + 0xEB) & 0xFD, chip_iobase + 0xEB);
