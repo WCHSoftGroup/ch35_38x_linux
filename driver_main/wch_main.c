@@ -35,6 +35,7 @@
  *       - add support for procfs and registers viewing
  *       - add support for rs485 auto configuration
  * V1.26 - add support for 8HS/10HS/16HS and 20S mode
+ *       - enable interrupt request retry
  */
 
 #include "wch_common.h"
@@ -328,7 +329,6 @@ static int wch_pci_board_probe(void)
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
 #endif
 
-	// clear and init some variable
 	memset(wch_board_table, 0, WCH_BOARDS_MAX * sizeof(struct wch_board));
 
 	for (i = 0; i < WCH_BOARDS_MAX; i++) {
@@ -338,7 +338,6 @@ static int wch_pci_board_probe(void)
 
 	wch_pci_board_id_cnt = (sizeof(wch_pci_board_id) / sizeof(wch_pci_board_id[0])) - 1;
 
-	// search wch serial and multi-I/O board
 	pdev = NULL;
 	table_cnt = 0;
 	board_cnt = 0;
@@ -523,7 +522,6 @@ static int wch_assign_resource(void)
 			if (sb->ser_ports > 0) {
 				sb->vector_mask = 0;
 
-				// assign serial port resource
 				ser_n = sb->ser_port_index = ser_port_index;
 
 				sp = &wch_ser_table[ser_n];
@@ -1082,8 +1080,9 @@ static int wch_register_irq(void)
 		}
 		if (ch365_32s) {
 			outb(inb(sb->bar_addr[0] + 0xF8) & 0xFE, sb->bar_addr[0] + 0xF8);
+			/* set read/write plus width 240ns->120ns */
 			outb(((inb(sb->bar_addr[0] + 0xFA) & 0xFB) | 0x03),
-			     sb->bar_addr[0] + 0xFA); // set read/write plus width 240ns->120ns
+			     sb->bar_addr[0] + 0xFA);
 		}
 
 		if (((sb->board_flag & BOARDFLAG_CH384_8_PORTS) == BOARDFLAG_CH384_8_PORTS) ||
@@ -1094,7 +1093,7 @@ static int wch_register_irq(void)
 			((sb->board_flag & BOARDFLAG_CH384_20H_PORTS) == BOARDFLAG_CH384_20H_PORTS)) {
 			chip_iobase = sb->bar_addr[0];
 			if (chip_iobase) {
-				outb(inb(chip_iobase + 0xEB) | 0x02, chip_iobase + 0xEB);
+				outb(inb(chip_iobase + 0xEB) | 0x02 | 0x10, chip_iobase + 0xEB);
 				/* set read/write plus width 120ns->210ns */
 				outb(inb(chip_iobase + 0xFA) | 0x10, chip_iobase + 0xFA);
 			}

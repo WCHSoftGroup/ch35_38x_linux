@@ -3311,16 +3311,10 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
     unsigned char ch438irqbits;
     unsigned long bits;
     int pass_counter = 0;
-    unsigned char data = 0;
     unsigned char iir;
+    bool handled = false;
 
     max = sb->ser_ports;
-
-    // 关闭全局中断
-    sp = first_sp;
-    data = inb(sp->port.chip_iobase + 0xEB);
-    data &= ~(1U << 1U);
-    outb(data, sp->port.chip_iobase + 0xEB);
 
     if ((first_sp->port.port_flag & PORTFLAG_REMAP) == PORTFLAG_REMAP) {  // CH352_2S CH352_1S1P
         while (1) {
@@ -3336,6 +3330,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3369,6 +3364,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3399,6 +3395,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3442,6 +3439,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                             if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                                 continue;
                             } else {
+                                handled = true;
                                 spin_lock(&sp->port.lock);
                                 ser_handle_port(sp, iir);
                                 spin_unlock(&sp->port.lock);
@@ -3472,6 +3470,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                             if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                                 continue;
                             } else {
+                                handled = true;
                                 spin_lock(&sp->port.lock);
                                 ser_handle_port(sp, iir);
                                 spin_unlock(&sp->port.lock);
@@ -3520,6 +3519,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                             if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                                 continue;
                             } else {
+                                handled = true;
                                 spin_lock(&sp->port.lock);
                                 ser_handle_port(sp, iir);
                                 spin_unlock(&sp->port.lock);
@@ -3535,6 +3535,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3547,6 +3548,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3559,6 +3561,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3571,6 +3574,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3612,6 +3616,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3635,6 +3640,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3658,6 +3664,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3681,6 +3688,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3713,6 +3721,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
                     continue;
                 } else {
+                    handled = true;
                     spin_lock(&sp->port.lock);
                     ser_handle_port(sp, iir);
                     spin_unlock(&sp->port.lock);
@@ -3725,11 +3734,8 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
         }
     }
     
-    // 开启全局中断
-    sp = first_sp;
-    data = inb(sp->port.chip_iobase + 0xEB);
-    data |= (1U << 1U);
-    outb(data, sp->port.chip_iobase + 0xEB);
-    
+if (handled)
     return 0;
+else
+    return -1;
 }
