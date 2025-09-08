@@ -107,7 +107,7 @@
 WCH driver information
 *******************************************************/
 #define WCH_DRIVER_VERSION "1.26"
-#define WCH_DRIVER_DATE "2025.03"
+#define WCH_DRIVER_DATE "2025.09"
 #define WCH_DRIVER_AUTHOR "WCH GROUP"
 #define WCH_DRIVER_DESC "WCH Multi-I/O Board Driver Module"
 

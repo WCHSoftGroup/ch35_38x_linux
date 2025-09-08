@@ -35,6 +35,7 @@
  *       - add support for procfs and registers viewing
  *       - add support for rs485 auto configuration
  * V1.26 - add support for 8HS/10HS/16HS and 20S mode
+ *       - enable interrupt request retry
  */
 
 #include "wch_common.h"
@@ -181,7 +182,7 @@ volatile int reg_dump = 0;
 static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	int i, j;
-	unsigned int lcr, dll, dlm;
+	unsigned char lcr, dll, dlm, mcr;
 	struct wch_board *sb = NULL;
 	struct wch_ser_port *sp = NULL;
 
@@ -197,6 +198,7 @@ static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, 
 				lcr = inb(sp->port.iobase + UART_LCR);
 
 				outb(lcr | UART_LCR_DLAB, (sp->port.iobase + UART_LCR));
+				mcr = inb(sp->port.iobase + UART_MCR);
 				dll = inb(sp->port.iobase + UART_DLL);
 				dlm = inb(sp->port.iobase + UART_DLM);
 
@@ -204,7 +206,7 @@ static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, 
 
 				printk("UART%2d - IER:%02x IIR:%02x LCR:%02x MCR:%02x LSR:%02x MSR:%02x SCR:%02x DLL:%02x DLM:%02x\n",
 				       j + sb->ser_port_index, inb(sp->port.iobase + UART_IER),
-				       inb(sp->port.iobase + UART_IIR), lcr, inb(sp->port.iobase + UART_MCR),
+				       inb(sp->port.iobase + UART_IIR), lcr, inb(sp->port.iobase + UART_MCR) | mcr,
 				       inb(sp->port.iobase + UART_LSR), inb(sp->port.iobase + UART_MSR),
 				       inb(sp->port.iobase + UART_SCR), dll, dlm);
 			}
@@ -328,7 +330,6 @@ static int wch_pci_board_probe(void)
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
 #endif
 
-	// clear and init some variable
 	memset(wch_board_table, 0, WCH_BOARDS_MAX * sizeof(struct wch_board));
 
 	for (i = 0; i < WCH_BOARDS_MAX; i++) {
@@ -338,7 +339,6 @@ static int wch_pci_board_probe(void)
 
 	wch_pci_board_id_cnt = (sizeof(wch_pci_board_id) / sizeof(wch_pci_board_id[0])) - 1;
 
-	// search wch serial and multi-I/O board
 	pdev = NULL;
 	table_cnt = 0;
 	board_cnt = 0;
@@ -523,7 +523,6 @@ static int wch_assign_resource(void)
 			if (sb->ser_ports > 0) {
 				sb->vector_mask = 0;
 
-				// assign serial port resource
 				ser_n = sb->ser_port_index = ser_port_index;
 
 				sp = &wch_ser_table[ser_n];
@@ -552,7 +551,7 @@ static int wch_assign_resource(void)
 						return status;
 					}
 
-					if (sb->pb_info.port[j].rs485_enable && (sp->port.chip_flag == WCH_BOARD_CH382_2S ||
+					if ((sp->port.chip_flag == WCH_BOARD_CH382_2S ||
 					    sp->port.chip_flag == WCH_BOARD_CH382_2S1P ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S1P ||
@@ -567,10 +566,17 @@ static int wch_assign_resource(void)
 						cval = inb(sp->port.iobase + UART_LCR);
 						mval = inb(sp->port.iobase + UART_MCR);
 						outb(cval | UART_LCR_DLAB, sp->port.iobase + UART_LCR);
-						if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
-							outb(mval | BIT(6), sp->port.iobase + UART_MCR);
-						else
-							outb(mval | BIT(7), sp->port.iobase + UART_MCR);
+						if (sb->pb_info.port[j].rs485_enable) {
+							if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
+								outb(mval | BIT(6), sp->port.iobase + UART_MCR);
+							else
+								outb(mval | BIT(7), sp->port.iobase + UART_MCR);
+						} else {
+							if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
+								outb(mval & ~BIT(6), sp->port.iobase + UART_MCR);
+							else
+								outb(mval & ~BIT(7), sp->port.iobase + UART_MCR);
+						}
 						outb(cval, sp->port.iobase + UART_LCR);
 					}
 
@@ -1082,8 +1088,9 @@ static int wch_register_irq(void)
 		}
 		if (ch365_32s) {
 			outb(inb(sb->bar_addr[0] + 0xF8) & 0xFE, sb->bar_addr[0] + 0xF8);
+			/* set read/write plus width 240ns->120ns */
 			outb(((inb(sb->bar_addr[0] + 0xFA) & 0xFB) | 0x03),
-			     sb->bar_addr[0] + 0xFA); // set read/write plus width 240ns->120ns
+			     sb->bar_addr[0] + 0xFA);
 		}
 
 		if (((sb->board_flag & BOARDFLAG_CH384_8_PORTS) == BOARDFLAG_CH384_8_PORTS) ||
@@ -1094,7 +1101,7 @@ static int wch_register_irq(void)
 			((sb->board_flag & BOARDFLAG_CH384_20H_PORTS) == BOARDFLAG_CH384_20H_PORTS)) {
 			chip_iobase = sb->bar_addr[0];
 			if (chip_iobase) {
-				outb(inb(chip_iobase + 0xEB) | 0x02, chip_iobase + 0xEB);
+				outb(inb(chip_iobase + 0xEB) | 0x02 | 0x10, chip_iobase + 0xEB);
 				/* set read/write plus width 120ns->210ns */
 				outb(inb(chip_iobase + 0xFA) | 0x10, chip_iobase + 0xFA);
 			}

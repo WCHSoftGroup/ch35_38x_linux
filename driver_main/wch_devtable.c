@@ -502,13 +502,13 @@ struct pci_board wch_pci_board_conf[] = {
 		BOARDFLAG_CH384_28_PORTS,
 		{
 			{ 's', 0, 0xC0, 8, -1, 0, 0, WCH_BOARD_CH384_28S,
-			  1 },
+			  0 },
 			{ 's', 0, 0xC8, 8, -1, 0, 0, WCH_BOARD_CH384_28S,
-			  1 },
+			  0 },
 			{ 's', 0, 0xD0, 8, -1, 0, 0, WCH_BOARD_CH384_28S,
-			  1 },
+			  0 },
 			{ 's', 0, 0xD8, 8, -1, 0, 0, WCH_BOARD_CH384_28S,
-			  1 },
+			  0 },
 
 			{ 's', 0, 0x00, 8, -1, 0, 0, WCH_BOARD_CH384_28S,
 			  0 },
