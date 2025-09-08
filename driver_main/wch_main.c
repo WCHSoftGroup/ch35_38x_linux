@@ -182,7 +182,7 @@ volatile int reg_dump = 0;
 static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	int i, j;
-	unsigned int lcr, dll, dlm;
+	unsigned char lcr, dll, dlm, mcr;
 	struct wch_board *sb = NULL;
 	struct wch_ser_port *sp = NULL;
 
@@ -198,6 +198,7 @@ static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, 
 				lcr = inb(sp->port.iobase + UART_LCR);
 
 				outb(lcr | UART_LCR_DLAB, (sp->port.iobase + UART_LCR));
+				mcr = inb(sp->port.iobase + UART_MCR);
 				dll = inb(sp->port.iobase + UART_DLL);
 				dlm = inb(sp->port.iobase + UART_DLM);
 
@@ -205,7 +206,7 @@ static ssize_t reg_dump_show(struct kobject *kobj, struct kobj_attribute *attr, 
 
 				printk("UART%2d - IER:%02x IIR:%02x LCR:%02x MCR:%02x LSR:%02x MSR:%02x SCR:%02x DLL:%02x DLM:%02x\n",
 				       j + sb->ser_port_index, inb(sp->port.iobase + UART_IER),
-				       inb(sp->port.iobase + UART_IIR), lcr, inb(sp->port.iobase + UART_MCR),
+				       inb(sp->port.iobase + UART_IIR), lcr, inb(sp->port.iobase + UART_MCR) | mcr,
 				       inb(sp->port.iobase + UART_LSR), inb(sp->port.iobase + UART_MSR),
 				       inb(sp->port.iobase + UART_SCR), dll, dlm);
 			}
@@ -550,7 +551,7 @@ static int wch_assign_resource(void)
 						return status;
 					}
 
-					if (sb->pb_info.port[j].rs485_enable && (sp->port.chip_flag == WCH_BOARD_CH382_2S ||
+					if ((sp->port.chip_flag == WCH_BOARD_CH382_2S ||
 					    sp->port.chip_flag == WCH_BOARD_CH382_2S1P ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S ||
 					    sp->port.chip_flag == WCH_BOARD_CH384_4S1P ||
@@ -565,10 +566,17 @@ static int wch_assign_resource(void)
 						cval = inb(sp->port.iobase + UART_LCR);
 						mval = inb(sp->port.iobase + UART_MCR);
 						outb(cval | UART_LCR_DLAB, sp->port.iobase + UART_LCR);
-						if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
-							outb(mval | BIT(6), sp->port.iobase + UART_MCR);
-						else
-							outb(mval | BIT(7), sp->port.iobase + UART_MCR);
+						if (sb->pb_info.port[j].rs485_enable) {
+							if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
+								outb(mval | BIT(6), sp->port.iobase + UART_MCR);
+							else
+								outb(mval | BIT(7), sp->port.iobase + UART_MCR);
+						} else {
+							if (sp->port.chip_flag == WCH_BOARD_CH351_2S)
+								outb(mval & ~BIT(6), sp->port.iobase + UART_MCR);
+							else
+								outb(mval & ~BIT(7), sp->port.iobase + UART_MCR);
+						}
 						outb(cval, sp->port.iobase + UART_LCR);
 					}
 

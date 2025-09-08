@@ -30,5 +30,7 @@ uninstall:
 	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/tty/serial/$(DRIVERNAME).ko || true
 	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/char/$(DRIVERNAME).ko || true
 	rm -f /lib/modules/$(shell uname -r)/misc/$(DRIVERNAME).ko || true
+	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/tty/wch/ch35_38x.ko || true
+	rm -f /lib/modules/$(shell uname -r)/kernel/drivers/tty/wch/ch35_38x/ch35_38x.ko || true
 	depmod -a
 endif

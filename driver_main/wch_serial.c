@@ -466,8 +466,8 @@ static _INLINE_ void ser_update_mctrl(struct ser_port *port, unsigned int set, u
     old = port->mctrl;
     port->mctrl = (old & ~clear) | set;
 
-    if (port->hardflow)
-        port->mctrl |= UART_MCR_RTS;
+    if (port->isopen && port->hardflow)
+        port->mctrl |= TIOCM_RTS;
 
     if (old != port->mctrl) {
         wch_ser_set_mctrl(port, port->mctrl);
@@ -629,6 +629,8 @@ static void ser_shutdown(struct ser_state *state)
     struct ser_port *port = state->port;
     struct wch_ser_port *sp = (struct wch_ser_port *)port;
 
+    port->isopen = false;
+
     if (!(info->flags & WCH_UIF_INITIALIZED)) {
         return;
     }
@@ -664,7 +666,7 @@ static void ser_shutdown(struct ser_state *state)
 
     // modified on 20200929
     sp->mcr = 0;
-    clear_mctrl(port, TIOCM_OUT2 | TIOCM_DTR | TIOCM_RTS);
+    clear_mctrl(port, ~0);
 
     info->flags &= ~WCH_UIF_INITIALIZED;
 }
@@ -2249,7 +2251,7 @@ static void ser_close(struct tty_struct *tty, struct file *filp)
 static void wch_ser_set_mctrl(struct ser_port *port, unsigned int mctrl)
 {
     struct wch_ser_port *sp = (struct wch_ser_port *)port;
-    unsigned char mcr = READ_UART_MCR(sp);
+    unsigned char mcr = 0;
 
     if (mctrl & TIOCM_RTS) {
         mcr |= UART_MCR_RTS;
@@ -2510,8 +2512,6 @@ static void wch_ser_set_termios(struct ser_port *port, struct WCHTERMIOS *termio
     if (sp->capabilities & UART_USE_FIFO) {
         fcr = UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10;
     }
-
-    sp->mcr &= ~UART_MCR_AFE;
 
     if (termios->c_cflag & CRTSCTS) {
         sp->mcr |= UART_MCR_AFE;
