@@ -2585,10 +2585,14 @@ static void wch_ser_set_termios(struct ser_port *port, struct WCHTERMIOS *termio
 static void wch_ser_timeout(unsigned long data)
 {
     struct wch_ser_port *sp = (struct wch_ser_port *)data;
-#else
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0))
 static void wch_ser_timeout(struct timer_list *t)
 {
     struct wch_ser_port *sp = from_timer(sp, t, timer);
+#else
+static void wch_ser_timeout(struct timer_list *t)
+{
+    struct wch_ser_port *sp = timer_container_of(sp, t, timer);
 #endif
     unsigned int timeout;
     unsigned int iir;
