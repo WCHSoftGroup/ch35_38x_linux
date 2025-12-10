@@ -107,7 +107,7 @@
 WCH driver information
 *******************************************************/
 #define WCH_DRIVER_VERSION "1.26"
-#define WCH_DRIVER_DATE "2025.09"
+#define WCH_DRIVER_DATE "2025.11"
 #define WCH_DRIVER_AUTHOR "WCH GROUP"
 #define WCH_DRIVER_DESC "WCH Multi-I/O Board Driver Module"
 
@@ -244,6 +244,8 @@ enum {
 #define BOARDFLAG_CH384_10H_PORTS 0x0080
 #define BOARDFLAG_CH384_16H_PORTS 0x0100
 #define BOARDFLAG_CH384_20H_PORTS 0x0200
+#define BOARDFLAG_CH384_4_PORTS 0x0400
+#define BOARDFLAG_CH382_2_PORTS 0x0800
 
 // for port_flag
 #define PORTFLAG_NONE 0x0000
@@ -670,7 +672,6 @@ struct ser_port {
 	bool bext1stport;
 	bool bspe1stport;
 	bool hardflow;
-	bool isopen;
 	unsigned char ldisc_stop_rx;
 
 	unsigned int setserial_flag;

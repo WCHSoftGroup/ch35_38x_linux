@@ -466,7 +466,7 @@ static _INLINE_ void ser_update_mctrl(struct ser_port *port, unsigned int set, u
     old = port->mctrl;
     port->mctrl = (old & ~clear) | set;
 
-    if (port->isopen && port->hardflow)
+    if (port->hardflow)
         port->mctrl |= TIOCM_RTS;
 
     if (old != port->mctrl) {
@@ -628,8 +628,6 @@ static void ser_shutdown(struct ser_state *state)
     struct ser_info *info = state->info;
     struct ser_port *port = state->port;
     struct wch_ser_port *sp = (struct wch_ser_port *)port;
-
-    port->isopen = false;
 
     if (!(info->flags & WCH_UIF_INITIALIZED)) {
         return;
@@ -2141,7 +2139,6 @@ static int ser_open(struct tty_struct *tty, struct file *filp)
 #else
         MOD_INC_USE_COUNT;
 #endif
-        state->port->isopen = true;
     }
 
 fail:
@@ -2244,7 +2241,6 @@ static void ser_close(struct tty_struct *tty, struct file *filp)
 #else
         MOD_DEC_USE_COUNT;
 #endif
-        port->isopen = false;
     }
 }
 
@@ -3305,7 +3301,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 {
     struct wch_ser_port *sp;
     int i;
-    int index_start, index_end;
+    int index_start = 0, index_end = 0;
     int max;
     unsigned long irqbits;
     unsigned char ch438irqbits;
@@ -3327,7 +3323,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3361,7 +3357,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3392,7 +3388,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3436,7 +3432,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                         if (ch438irqbits & (1 << i)) {
                             sp += i;
                             iir = READ_UART_IIR(sp) & 0x0f;
-                            if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                            if (iir & UART_IIR_NO_INT) {
                                 continue;
                             } else {
                                 handled = true;
@@ -3467,7 +3463,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                         if (ch438irqbits & (1 << i)) {
                             sp += i - index_start;
                             iir = READ_UART_IIR(sp) & 0x0f;
-                            if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                            if (iir & UART_IIR_NO_INT) {
                                 continue;
                             } else {
                                 handled = true;
@@ -3516,7 +3512,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                         if (ch438irqbits & (1 << i)) {
                             sp += i - index_start;
                             iir = READ_UART_IIR(sp) & 0x0f;
-                            if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                            if (iir & UART_IIR_NO_INT) {
                                 continue;
                             } else {
                                 handled = true;
@@ -3532,7 +3528,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 sp = first_sp;
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3545,7 +3541,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 sp = first_sp + 0x01;
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3558,7 +3554,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 sp = first_sp + 0x02;
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3571,7 +3567,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 sp = first_sp + 0x03;
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3613,7 +3609,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3637,7 +3633,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 }
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3661,7 +3657,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 }
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3685,7 +3681,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
                 }
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
@@ -3718,7 +3714,7 @@ extern int wch_ser_interrupt(struct wch_board *sb, struct wch_ser_port *first_sp
 
                 iir = READ_UART_IIR(sp) & 0x0f;
 
-                if ((iir & UART_IIR_NO_INT) || !sp->port.isopen) {
+                if (iir & UART_IIR_NO_INT) {
                     continue;
                 } else {
                     handled = true;
