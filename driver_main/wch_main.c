@@ -36,11 +36,13 @@
  *       - add support for rs485 auto configuration
  * V1.26 - add support for 8HS/10HS/16HS and 20S mode
  *       - enable interrupt request retry
+ * V1.27 - add support for multiple processes accessing the same serial port
  */
 
 #include "wch_common.h"
 
 MODULE_AUTHOR(WCH_DRIVER_AUTHOR);
+MODULE_VERSION(WCH_DRIVER_VERSION);
 MODULE_DESCRIPTION(WCH_DRIVER_DESC);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 18))
 MODULE_LICENSE("GPL");
