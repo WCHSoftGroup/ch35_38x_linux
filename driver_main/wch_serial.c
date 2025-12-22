@@ -2584,7 +2584,11 @@ static void wch_ser_timeout(unsigned long data)
 #else
 static void wch_ser_timeout(struct timer_list *t)
 {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0))
     struct wch_ser_port *sp = from_timer(sp, t, timer);
+#else
+    struct wch_ser_port *sp = timer_container_of(sp, t, timer);
+#endif
 #endif
     unsigned int timeout;
     unsigned int iir;
