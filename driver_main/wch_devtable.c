@@ -42,6 +42,25 @@ struct pci_board wch_pci_board_conf[] = {
 		},
 	},
 
+    /* CH351_1P */
+	{
+		VENDOR_ID_WCH_CH351,
+		DEVICE_ID_WCH_CH351_2S,
+		SUB_VENDOR_ID_WCH_CH351,
+		SUB_DEVICE_ID_WCH_CH351_2S,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		"CH351_1P",
+		BOARDFLAG_REMAP,
+		{
+			{ 'n', -1, 0, 0, -1, 0, 0, WCH_BOARD_CH351_1P, 0 },
+		},
+	},
+
 	/* CH352_2S */
 	{
 		VENDOR_ID_WCH_PCI,
@@ -396,6 +415,25 @@ struct pci_board wch_pci_board_conf[] = {
 			  0 },
 			{ 's', 0, 0xC8, 8, -1, 0, 0, WCH_BOARD_CH382_2S1P,
 			  0 },
+		},
+	},
+
+	/* CH382_1P */
+	{
+		VENDOR_ID_WCH_PCIE,
+		DEVICE_ID_WCH_CH382_1P,
+		SUB_VENDOR_ID_WCH_PCIE,
+		SUB_DEVICE_ID_WCH_CH382_1P,
+		0,
+		0,
+		0xE9,
+		0x00,
+		0x00,
+		0x00,
+		"CH382_1P",
+		BOARDFLAG_NONE,
+		{
+			{ 'n', -1, 0, 0, -1, 0, 0, WCH_BOARD_CH382_1P, 0 },
 		},
 	},
 

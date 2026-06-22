@@ -95,9 +95,14 @@
 #include <linux/sched/signal.h>
 #endif
 
+#include <linux/parport.h>
+#include <linux/parport_pc.h>
 #include <linux/sched.h>
 #include <linux/seq_file.h>
 
+#ifndef PARPORT_ENABLE
+#define PARPORT_ENABLE 0
+#endif
 /*-------------------------------------------------------------------------------
 
  for wch_main.c
@@ -106,8 +111,8 @@
 /*******************************************************
 WCH driver information
 *******************************************************/
-#define WCH_DRIVER_VERSION "1.26"
-#define WCH_DRIVER_DATE "2025.11"
+#define WCH_DRIVER_VERSION "1.28"
+#define WCH_DRIVER_DATE "2026.06"
 #define WCH_DRIVER_AUTHOR "WCH GROUP"
 #define WCH_DRIVER_DESC "WCH Multi-I/O Board Driver Module"
 
@@ -152,6 +157,8 @@ static void dbg_serial(const char *fmt, ...)
 #define SUB_VENDOR_ID_WCH_CH351 0x1C00
 #define DEVICE_ID_WCH_CH351_2S 0x2273
 #define SUB_DEVICE_ID_WCH_CH351_2S 0x2273
+#define DEVICE_ID_WCH_CH351_1P 0x2170
+#define SUB_DEVICE_ID_WCH_CH351_1P 0x2170
 #define DEVICE_ID_WCH_CH352_1S1P 0x5053
 #define SUB_DEVICE_ID_WCH_CH352_1S1P 0x5053
 #define DEVICE_ID_WCH_CH352_2S 0x3253
@@ -182,6 +189,8 @@ static void dbg_serial(const char *fmt, ...)
 #define SUB_DEVICE_ID_WCH_CH382_2S 0x3253
 #define DEVICE_ID_WCH_CH382_2S1P 0x3250
 #define SUB_DEVICE_ID_WCH_CH382_2S1P 0x3250
+#define DEVICE_ID_WCH_CH382_1P 0x3050
+#define SUB_DEVICE_ID_WCH_CH382_1P 0x3050
 #define DEVICE_ID_WCH_CH384_4S 0x3470
 #define SUB_DEVICE_ID_WCH_CH384_4S 0x3470
 #define DEVICE_ID_WCH_CH384_4S1P 0x3450
@@ -206,6 +215,7 @@ static void dbg_serial(const char *fmt, ...)
 enum {
 	NONE_BOARD = 0,
 	WCH_BOARD_CH351_2S,
+	WCH_BOARD_CH351_1P,
 	WCH_BOARD_CH352_2S,
 	WCH_BOARD_CH352_1S1P,
 	WCH_BOARD_CH353_4S,
@@ -221,6 +231,7 @@ enum {
 	WCH_BOARD_CH359_16S,
 	WCH_BOARD_CH382_2S,
 	WCH_BOARD_CH382_2S1P,
+	WCH_BOARD_CH382_1P,
 	WCH_BOARD_CH384_4S,
 	WCH_BOARD_CH384_4S1P,
 	WCH_BOARD_CH384_8S,
@@ -485,9 +496,11 @@ struct wch_board {
 
 	unsigned int ser_ports;
 	unsigned int ser_port_index;
+    struct parport *pp;
 
 	unsigned long bar_addr[WCH_PCICFG_BAR_TOTAL];
 	unsigned int irq;
+	bool irq_alloced;
 	void *board_membase;
 	unsigned int board_flag;
 
