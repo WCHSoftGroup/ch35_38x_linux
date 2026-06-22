@@ -2935,6 +2935,8 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 {
     struct tty_driver *normal = NULL;
     int i;
+    int major_backup = 255;
+    bool registration = false;
     int ret = 0;
 
 #if WCH_DBG
@@ -3040,8 +3042,15 @@ extern int wch_ser_register_driver(struct ser_driver *drv)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 28))
     kref_init(&normal->kref);
 #endif
+
+retry:
     ret = tty_register_driver(normal);
     if (ret < 0) {
+        if (!registration) {
+            normal->major = major_backup;
+            registration = true;
+            goto retry;
+        }
         printk("WCH Error: Register tty driver fail !\n\n");
         goto out;
     }

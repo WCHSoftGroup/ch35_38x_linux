@@ -1,7 +1,7 @@
 /*
- * PCI/PCIe to serial driver for ch351/352/353/355/356/357/358/359/382/384, etc.
+ * PCI/PCIe to serial driver for CH351/352/353/355/356/357/358/359/382/384, etc.
  *
- * Copyright (C) 2024 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (C) 2026 Nanjing Qinheng Microelectronics Co., Ltd.
  * Web: 	http://wch.cn
  * Author:	WCH <tech@wch.cn>
  *
@@ -28,7 +28,7 @@
  * V1.21 - fix modem setting when disable hardflow
  * V1.22 - add support for rs485 configuration
  * V1.23 - add support for kernel version beyond 5.14.x
- * V1.24 - fix ch351/2/3 uart0 setting bug
+ * V1.24 - fix CH351/2/3 uart0 setting bug
  *       - add support for kernel version beyond 6.1.x
  * V1.25 - add support for kernel version beyond 6.3.x
  *       - add support for QT serial port library
@@ -37,6 +37,9 @@
  * V1.26 - add support for 8HS/10HS/16HS and 20S mode
  *       - enable interrupt request retry
  * V1.27 - add support for multiple processes accessing the same serial port
+ * V1.28 - unbind the serial port cards from the built-in serial port driver
+ *       - bind the parallel port cards to the parallel port driver
+ *       - fix frequency multiplier detection for some serial ports of CH35X series
  */
 
 #include "wch_common.h"
@@ -56,6 +59,8 @@ extern unsigned char ch365_32s;
 static struct pci_device_id wch_pci_board_id[] = {
 	{ VENDOR_ID_WCH_CH351, DEVICE_ID_WCH_CH351_2S, SUB_VENDOR_ID_WCH_CH351, SUB_DEVICE_ID_WCH_CH351_2S, 0, 0,
 	  WCH_BOARD_CH351_2S },
+	{ VENDOR_ID_WCH_CH351, DEVICE_ID_WCH_CH351_1P, SUB_VENDOR_ID_WCH_CH351, SUB_DEVICE_ID_WCH_CH351_1P, 0, 0,
+	  WCH_BOARD_CH351_1P },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH352_2S, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH352_2S, 0, 0,
 	  WCH_BOARD_CH352_2S },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH352_1S1P, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH352_1S1P, 0, 0,
@@ -86,6 +91,8 @@ static struct pci_device_id wch_pci_board_id[] = {
 	  WCH_BOARD_CH382_2S },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH382_2S1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH382_2S1P, 0, 0,
 	  WCH_BOARD_CH382_2S1P },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH382_1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH382_1P, 0, 0,
+	  WCH_BOARD_CH382_1P },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_4S, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_4S, 0, 0,
 	  WCH_BOARD_CH384_4S },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_4S1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_4S1P, 0, 0,
@@ -119,6 +126,8 @@ struct wch_pci_info {
 static struct wch_pci_info wch_pci_board_id[] = {
 	{ VENDOR_ID_WCH_CH351, DEVICE_ID_WCH_CH351_2S, SUB_VENDOR_ID_WCH_CH351, SUB_DEVICE_ID_WCH_CH351_2S,
 	  WCH_BOARD_CH351_2S },
+	{ VENDOR_ID_WCH_CH351, DEVICE_ID_WCH_CH351_1P, SUB_VENDOR_ID_WCH_CH351, SUB_DEVICE_ID_WCH_CH351_1P,
+	  WCH_BOARD_CH351_1P },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH352_2S, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH352_2S,
 	  WCH_BOARD_CH352_2S },
 	{ VENDOR_ID_WCH_PCI, DEVICE_ID_WCH_CH352_1S1P, SUB_VENDOR_ID_WCH_PCI, SUB_DEVICE_ID_WCH_CH352_1S1P,
@@ -149,6 +158,8 @@ static struct wch_pci_info wch_pci_board_id[] = {
 	  WCH_BOARD_CH382_2S },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH382_2S1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH382_2S1P,
 	  WCH_BOARD_CH382_2S1P },
+	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH382_1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH382_1P,
+	  WCH_BOARD_CH382_1P },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_4S, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_4S,
 	  WCH_BOARD_CH384_4S },
 	{ VENDOR_ID_WCH_PCIE, DEVICE_ID_WCH_CH384_4S1P, SUB_VENDOR_ID_WCH_PCIE, SUB_DEVICE_ID_WCH_CH384_4S1P,
@@ -315,6 +326,24 @@ static void wch_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 #endif
 }
 
+static int wch_force_remove(struct pci_dev *pdev)
+{
+    struct device *dev = &pdev->dev;
+
+    if (!dev->driver)
+        return 0;
+
+    printk("WCH: force unbind driver %s\n", dev->driver->name);
+
+    device_release_driver(dev);
+
+    msleep(300);
+
+    printk("WCH: unbind done\n");
+
+    return 0;
+}
+
 static int wch_pci_board_probe(void)
 {
 	struct wch_board *sb;
@@ -327,6 +356,7 @@ static int wch_pci_board_probe(void)
 	int i;
 	unsigned short int sub_device_id;
 	int status;
+	u8 val;
 
 #if WCH_DBG
 	printk("%s : %s\n", __FILE__, __FUNCTION__);
@@ -356,6 +386,18 @@ static int wch_pci_board_probe(void)
 			table_cnt++;
 			continue;
 		}
+		
+        if (pdev->dev.driver) {
+            printk("WCH INFO: PCI device %04x:%04x "
+                   "already bound to driver [%s]\n",
+                   pdev->vendor, pdev->device, pdev->dev.driver->name);
+
+            if (!strcmp(pdev->dev.driver->name, "serial") || !strcmp(pdev->dev.driver->name, "parport_serial") ||
+				!strcmp(pdev->dev.driver->name, "parport_pc")) {
+                wch_force_remove(pdev);
+            }
+        }
+
 
 		if ((table_cnt > 0) && ((pdev == pdev_array[0]) || (pdev == pdev_array[1]) || (pdev == pdev_array[2]) ||
 					(pdev == pdev_array[3]))) {
@@ -392,12 +434,36 @@ static int wch_pci_board_probe(void)
 			pci_disable_device(pdev);
 #endif
 #endif
+			
 			status = pci_enable_device(pdev);
 
 			if (status != 0) {
 				printk("WCH Error: WCH Board Enable Fail !\n\n");
 				status = -ENXIO;
 				return status;
+			}
+
+            if (pdev->vendor == 0x1C00 && pdev->device != 0x2273) {	
+				status = pci_read_config_byte(pdev, 0x04, &val);
+				if (status != 0) {
+					printk("WCH Error: IO Space Read Fail !\n\n");
+					status = -ENXIO;
+					return status;
+				}
+				if ((val & 0x03) != 0x03) {
+					status = pci_write_config_byte(pdev, 0x04, 0x03);
+					if (status != 0) {
+						printk("WCH Error: IO Space Write Fail !\n\n");
+						status = -ENXIO;
+						return status;
+					}
+					status = pci_read_config_byte(pdev, 0x04, &val);
+					if (status != 0 || val != 0x03) {
+						printk("WCH Error: IO Space Restore Fail !\n\n");
+						status = -ENXIO;
+						return status;
+					}
+				}
 			}
 		}
 
@@ -472,7 +538,7 @@ static int wch_get_pci_board_conf(void)
 				printk("WCH Error: Too much serial port, maximum %d ports can be supported !\n\n",
 				       WCH_SER_TOTAL_MAX);
 				status = -EIO;
-				return status;
+				goto exit;
 			}
 
 			for (j = 0; j < WCH_PCICFG_BAR_TOTAL; j++) {
@@ -484,22 +550,56 @@ static int wch_get_pci_board_conf(void)
 				if (!sb->board_membase) {
 					status = -EIO;
 					printk("WCH Error: ioremap failed !\n");
-					return status;
+					goto exit;
 				}
 			}
 
-			sb->irq = sb->pdev->irq;
+			sb->irq = pdev->irq;
 			if (sb->irq <= 0) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0))
+				status = pci_alloc_irq_vectors(sb->pdev, 1, 1, PCI_IRQ_INTX);
+#else
+				status = pci_alloc_irq_vectors(sb->pdev, 1, 1, PCI_IRQ_LEGACY);
+#endif
+				if (status != 1) {
+					status = -EIO;
+					goto exit;
+				}
+				sb->irq = pci_irq_vector(sb->pdev, 0);
+				if (sb->irq <= 0) {
+					status = -EIO;
+					goto exit;
+				} else {
+					sb->irq_alloced = true;
+					continue;
+				}
+#endif
 				printk("WCH Error: WCH Board %s Series (bus:%d device:%d), in configuartion space, irq isn't valid !\n\n",
 				       sb->pb_info.board_name, sb->bus_number, sb->dev_number);
 
 				status = -EIO;
-				return status;
+				goto exit;
 			}
 		}
 	}
 
+	return 0;
+
+exit:
 	return status;
+}
+
+static void wch_free_pci_board_conf(void)
+{
+	int i = 0;
+	struct wch_board *sb = NULL;
+	
+	for (i = 0; i < WCH_BOARDS_MAX; i++) {
+		sb = &wch_board_table[i];
+		if (sb->irq_alloced)
+			pci_free_irq_vectors(sb->pdev);
+	}
 }
 
 static int wch_assign_resource(void)
@@ -767,37 +867,56 @@ static int wch_ser_port_table_init(void)
 					else
 						sp->port.bext1stport = false;
 				} else if (sp->port.chip_flag == WCH_BOARD_CH352_1S1P ||
+						sp->port.chip_flag == WCH_BOARD_CH352_2S) {
+					sp->port.bext1stport = false;
+				} else if (sp->port.chip_flag == WCH_BOARD_CH353_2S1P ||
+					   sp->port.chip_flag == WCH_BOARD_CH353_2S1PAR ||
+					   sp->port.chip_flag == WCH_BOARD_CH353_4S ||
 					   sp->port.chip_flag == WCH_BOARD_CH355_4S ||
 					   sp->port.chip_flag == WCH_BOARD_CH356_4S1P ||
 					   sp->port.chip_flag == WCH_BOARD_CH356_6S ||
 					   sp->port.chip_flag == WCH_BOARD_CH356_8S ||
+					   sp->port.chip_flag == WCH_BOARD_CH357_4S ||
 					   sp->port.chip_flag == WCH_BOARD_CH358_4S1P ||
-					   sp->port.chip_flag == WCH_BOARD_CH358_8S) {
-					if (n == sb->ser_port_index)
+					   sp->port.chip_flag == WCH_BOARD_CH358_8S ||
+					   sp->port.chip_flag == WCH_BOARD_CH359_16S) {
+					u8 cfg_ctl, cfg_stat;
+					pci_read_config_byte(sb->pdev, 0x40, &cfg_ctl);
+					pci_read_config_byte(sb->pdev, 0x41, &cfg_stat);
+					if (n == sb->ser_port_index) {
+						if (!(cfg_ctl & (1 << 5)) ||
+						    ((cfg_ctl & (1 << 7)) && (cfg_ctl & (1 << 0)))) {
+							sp->port.bext1stport = false;
+						} else {
+							sp->port.bext1stport = true;
+						}
+					} else if (n == sb->ser_port_index + 8) {
 						sp->port.bext1stport = true;
-					else
+					} else {
 						sp->port.bext1stport = false;
-				} else if (sp->port.chip_flag == WCH_BOARD_CH359_16S) {
-					if ((n == sb->ser_port_index) || (n == sb->ser_port_index + 8))
-						sp->port.bext1stport = true;
-					else
-						sp->port.bext1stport = false;
+					}
 				}
 
 				if (sp->port.chip_flag == WCH_BOARD_CH351_2S ||
 				    sp->port.chip_flag == WCH_BOARD_CH352_1S1P ||
-				    sp->port.chip_flag == WCH_BOARD_CH352_2S ||
-				    sp->port.chip_flag == WCH_BOARD_CH353_2S1P ||
-				    sp->port.chip_flag == WCH_BOARD_CH353_2S1PAR) {
+				    sp->port.chip_flag == WCH_BOARD_CH352_2S) {
 					if (n == sb->ser_port_index)
 						sp->port.bspe1stport = true;
 					else
 						sp->port.bspe1stport = false;
-				} else if (sp->port.chip_flag == WCH_BOARD_CH353_4S) {
-					if ((n == sb->ser_port_index) || (n == sb->ser_port_index + 2))
+				} else if (sp->port.chip_flag == WCH_BOARD_CH353_2S1P ||
+					   sp->port.chip_flag == WCH_BOARD_CH353_2S1PAR ||
+					   sp->port.chip_flag == WCH_BOARD_CH353_4S) {
+					u8 cfg_ctl;
+					pci_read_config_byte(sb->pdev, 0x40, &cfg_ctl);
+					if ((n == sb->ser_port_index) && !(cfg_ctl & (1 << 5)))
+						sp->port.bspe1stport = true;
+					else if (n == sb->ser_port_index + 2)
 						sp->port.bspe1stport = true;
 					else
 						sp->port.bspe1stport = false;
+				} else {
+					sp->port.bspe1stport = false;
 				}
 
 				sp->port.irq = sb->irq;
@@ -1160,6 +1279,9 @@ static void wch_release_irq(void)
 			if (chip_iobase)
 				outb(inb(chip_iobase + 0xEB) & 0xFD, chip_iobase + 0xEB);
 		}
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+		pci_free_irq_vectors(sb->pdev);
+#endif
 	}
 }
 
@@ -1168,6 +1290,57 @@ static struct ser_driver wch_ser_reg = {
 	.major = WCH_TTY_MAJOR,
 	.minor = 0,
 };
+
+#if PARPORT_ENABLE
+static int wch_parport_init(void)
+{
+    struct wch_board *sb;
+    unsigned long par_base;
+    int i;
+
+    for (i = 0; i < WCH_BOARDS_MAX; ++i) {
+        sb = &wch_board_table[i];
+
+        if (sb->board_enum <= 0) {
+            continue;
+        }
+
+        if (sb->board_enum != WCH_BOARD_CH351_1P && sb->board_enum != WCH_BOARD_CH352_1S1P &&
+            sb->board_enum != WCH_BOARD_CH353_2S1P && sb->board_enum != WCH_BOARD_CH353_2S1PAR &&
+            sb->board_enum != WCH_BOARD_CH356_4S1P && sb->board_enum != WCH_BOARD_CH358_4S1P &&
+            sb->board_enum != WCH_BOARD_CH382_2S1P && sb->board_enum != WCH_BOARD_CH382_1P &&
+		    sb->board_enum != WCH_BOARD_CH384_4S1P) {
+            continue;
+        }
+
+        par_base = sb->bar_addr[2];
+        sb->pp = parport_pc_probe_port(par_base, 0, PARPORT_IRQ_NONE, PARPORT_DMA_NONE, &sb->pdev->dev, 0);
+        if (!sb->pp) {
+		    printk("WCH DBG: board %s BAR0=0x%lx BAR1=0x%lx BAR2=0x%lx irq=%u\n", sb->pb_info.board_name,
+        		sb->bar_addr[0], sb->bar_addr[1], sb->bar_addr[2], sb->irq);
+            printk("WCH Error: parport probe failed\n");
+            return -ENODEV;
+        }
+    }
+
+    return 0;
+}
+
+static void wch_parport_exit(void)
+{
+    struct wch_board *sb;
+    int i;
+
+    for (i = 0; i < WCH_BOARDS_MAX; i++) {
+        sb = &wch_board_table[i];
+        if (!sb->pp)
+            continue;
+
+        parport_pc_unregister_port(sb->pp);
+        sb->pp = NULL;
+    }
+}
+#endif
 
 static int __init wch_init(void)
 {
@@ -1184,7 +1357,7 @@ static int __init wch_init(void)
 
 	status = wch_pci_board_probe();
 	if (status != 0) {
-		goto step1_fail;
+		goto step_fail;
 	}
 	printk("------------------->pci board probe success\n");
 	status = wch_get_pci_board_conf();
@@ -1221,6 +1394,12 @@ static int __init wch_init(void)
 	if (status != 0) {
 		goto step3_fail;
 	}
+#if PARPORT_ENABLE
+    status = wch_parport_init();
+    if (status != 0)
+        goto step4_fail;
+    printk("------------------->parport init success\n");
+#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
 	wch_pci_create_sysfs();
@@ -1234,16 +1413,17 @@ static int __init wch_init(void)
 	printk("================================================================================\n");
 	return status;
 
+#if PARPORT_ENABLE
+step4_fail:
+    wch_parport_exit();
+#endif
 step3_fail:
-
 	wch_ser_unregister_driver(&wch_ser_reg);
-
 step2_fail:
-
 	wch_release_irq();
-
 step1_fail:
-
+	wch_free_pci_board_conf();
+step_fail:
 	printk("WCH Error: Couldn't Loading WCH Multi-I/O Board Driver Module correctly,\n");
 	printk("           please reboot system and try again. If still can't loading driver,\n");
 	printk("           contact support.\n\n");
@@ -1267,8 +1447,13 @@ static void __exit wch_exit(void)
 	printk("***********wch_ser_unregister_ports***************\n");
 	wch_ser_unregister_driver(&wch_ser_reg);
 	printk("***********wch_ser_unregister_driver_success***********\n");
+#if PARPORT_ENABLE
+    wch_parport_exit();
+    printk("***********wch_parport_exit_success***********\n");
+#endif
 	wch_iounmap();
 	wch_release_irq();
+	wch_free_pci_board_conf();
 	printk("WCH Info : Unload WCH Multi-I/O Board Driver Module Done.\n");
 	printk("================================================================================\n");
 }
