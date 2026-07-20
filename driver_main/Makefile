@@ -81,6 +81,7 @@ endif
 
 FILE_NAME1=$(DRIVERNAME)
 FILE_NAME2=wch
+FILE_NAME3=ch35_38x
 SEARCH_DIRS="/lib/modules/$(shell uname -r)/kernel/"
 
 uninstall:
@@ -90,7 +91,7 @@ uninstall:
 
 	@for dir in $(SEARCH_DIRS); do     \
 	    if [ -d "$$dir" ]; then      \
-	        find "$$dir" \( -name "$(FILE_NAME1).*" -o -name "$(FILE_NAME2).*" \) 2>/dev/null | while read file; do   \
+	        find "$$dir" \( -name "$(FILE_NAME1).*" -o -name "$(FILE_NAME2).*" -o -name "$(FILE_NAME3).*" \) 2>/dev/null | while read file; do   \
 	            rm -f "$$file";      \
 	        done \
 	    fi \

@@ -563,11 +563,13 @@ static int wch_get_pci_board_conf(void)
 				status = pci_alloc_irq_vectors(sb->pdev, 1, 1, PCI_IRQ_LEGACY);
 #endif
 				if (status != 1) {
+					printk("pci_alloc_irq_vectors failed, status = %d\n", status);
 					status = -EIO;
 					goto exit;
 				}
 				sb->irq = pci_irq_vector(sb->pdev, 0);
 				if (sb->irq <= 0) {
+					printk("pci_irq_vector failed, irq = %d\n", sb->irq);
 					status = -EIO;
 					goto exit;
 				} else {
@@ -884,8 +886,8 @@ static int wch_ser_port_table_init(void)
 					pci_read_config_byte(sb->pdev, 0x40, &cfg_ctl);
 					pci_read_config_byte(sb->pdev, 0x41, &cfg_stat);
 					if (n == sb->ser_port_index) {
-						if (!(cfg_ctl & (1 << 5)) ||
-						    ((cfg_ctl & (1 << 7)) && (cfg_ctl & (1 << 0)))) {
+						if (!(cfg_ctl & (1 << 5)) || ((cfg_ctl & (1 << 7)) &&
+							(!(cfg_stat & (1 << 0))))) {
 							sp->port.bext1stport = false;
 						} else {
 							sp->port.bext1stport = true;
